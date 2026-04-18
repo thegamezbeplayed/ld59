@@ -9,15 +9,11 @@ Camera2D camera = { 0 };
 
 // Gameplay Screen Initialization logic
 void InitGameplayScreen(void){
-  MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
+//  MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
   //camera.target = player.position;
-  camera.offset = VECTOR2_CENTER_SCREEN;
-  camera.rotation = 0.0f;
-  camera.zoom = 1.0f;
+  InitCamera(3.0f,0.0f,Vector2Scale(VECTOR2_CENTER_SCREEN,0.5f),VECTOR2_CENTER_SCREEN);
 
-  camera.target = VECTOR2_CENTER_SCREEN;
   InitGameEvents();
-  InitScreenInteractive();
 }
 
 void PreUpdate(void){
@@ -37,30 +33,37 @@ void PostUpdate(void){
 // Gameplay Screen Update logic
 void UpdateGameplayScreen(void)
 {
-  ScreenSyncMouse();
+  if(player)
+    ScreenCameraSync( WorldPlayer()->pos );
 }
 
 // Gameplay Screen Draw logic
 void DrawGameplayScreen(void)
 {
-  //  if(game_process.state == GAME_LOADING)
-  //  return;
   BeginDrawing();
-  ClearBackground(GRAY);
-  BeginMode2D(camera);
+  ClearBackground(BLACK);
+
+  ScreenCameraToggle();
 
   WorldRender();
 
-  EndMode2D();
-  UISync();
+  ScreenRender();
+  ScreenCameraToggle();
+  //MapGenRender();
+  //UISync(FETCH_UPDATE);
+  //UIRender();
+  DrawFPS(5,5);
+
   EndDrawing();
+
+
 }
 
 // Gameplay Screen Unload logic
 void UnloadGameplayScreen(void)
 {
-  MenuSetState(&ui.menus[MENU_HUD],MENU_CLOSED);
-  MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_INACTIVE);
+  //MenuSetState(&ui.menus[MENU_HUD],MENU_CLOSED);
+  //MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_INACTIVE);
 
   GameProcessEnd();
   // TODO: Unload GAMEPLAY screen variables here!

@@ -275,3 +275,93 @@ void StepEvents(events_t* pool){
   }
 }
 
+event_bus_t* InitEventBus(int cap){
+  event_bus_t* bus = GameCalloc("InitEventBus",1,sizeof(event_bus_t));
+  *bus = (event_bus_t){
+    .cap = cap,
+      .subs = GameCalloc("InitEventBus", cap, sizeof(event_sub_t))
+  };
+
+  return bus;
+}
+
+void EventBusEnsureCap(event_bus_t* bus){
+  if (bus->count < bus->cap)
+    return;
+
+  int new_cap = bus->cap + 64;
+  bus->subs = GameRealloc("EventBusEnsureCap", bus->subs, new_cap * sizeof(event_sub_t));
+  bus->cap = new_cap;
+}
+
+event_sub_t* EventSubscribe(event_bus_t* bus, EventType event, EventCallback cb, void* u_data){
+  EventBusEnsureCap(bus);
+
+  event_sub_t* sub =  &bus->subs[bus->count++];
+  *sub = (event_sub_t){
+    .event = event,
+      .cb = cb,
+      .user_data = u_data
+  };
+
+  return sub;
+}
+
+void EventRemove(event_bus_t* bus, uint64_t id){
+  if (!bus) return;
+
+  int index = -1;
+  for (int i = 0; i < bus->count; i++) {
+    if (bus->subs[i].uid != id)
+      continue;
+    index = i;
+    break;
+  }
+
+  if (index < 0) return; // not found
+
+  bus->subs[index] = bus->subs[bus->count - 1];
+  bus->count--;
+
+}
+
+void EventUnsubscribe(event_bus_t* bus, event_sub_t* sub)
+{
+  if (!bus || !sub) return;
+
+  // Find the subscription in the array
+  int index = -1;
+  for (int i = 0; i < bus->count; i++) {
+    if (&bus->subs[i] == sub) {
+      index = i;
+      break;
+    }
+  }
+
+  if (index < 0) return; // not found
+
+  // Move last element into the removed slot
+  bus->subs[index] = bus->subs[bus->count - 1];
+  bus->count--;
+}
+
+void EventEmit(event_bus_t* bus, event_t* e){
+  for (int i = 0; i < bus->count; i++) {
+    if (bus->subs[i].event != e->type)
+      continue;
+
+    if(e->max != -1 && e->calls >= e->max)
+      break;
+
+    if (bus->subs[i].uid != -1
+       && bus->subs[i].uid != e->iuid)
+      continue;
+
+    bus->subs[i].cb(e->type, e->data, bus->subs[i].user_data);
+    e->calls++;
+  }
+
+  if(e->max != -1 && e->calls >= e->max)
+    EventRemove(bus, e->iuid);
+}
+

@@ -10,6 +10,28 @@
 #define MAX_SPRITES 64
 
 struct ent_s;
+typedef struct sub_texture_s {
+    int tag;
+    int originX, originY;
+    int positionX, positionY;
+    int sourceWidth, sourceHeight;
+    int padding;
+    bool trimmed;
+    int trimRecX, trimRecY, trimRecWidth, trimRecHeight;
+    int colliderType;
+    int colliderPosX, colliderPosY, colliderSizeX, colliderSizeY;
+} sub_texture_t;
+
+typedef struct{
+  const char* text;
+  Vector2     pos;
+  int         size;
+  Color       color;
+  int         duration;
+}render_text_t;
+
+void AddFloatingText(render_text_t *rt);
+
 void InitResources();
 
 typedef enum{
@@ -26,82 +48,6 @@ typedef struct{
   int elapsed;
 
 }anim_t;
-
-typedef enum{
-  TILES,
-  SHAPES,
-}SheetID;
-//====SHADERS===>
-typedef struct{
-  bool              has_chain[SHAPE_NONE];
-  RenderTexture2D   chain1[SHAPE_NONE];
-  RenderTexture2D   chain2[SHAPE_NONE];
-}texture_chain_t;
-
-typedef enum{
-  SHADER_NONE,
-  SHADER_BASE,
-  SHADER_BLOOM,
-  SHADER_BLUR,
-  SHADER_INVERT,
-  SHADER_OUTLINE,
-  SHADER_DONE
-}ShaderType;
-
-typedef struct{
-  const char* name;
-  ShaderType  type;
-}ShaderTypeAlias;
-
-typedef enum {
-  UNIFORM_TEXSIZE,
-  UNIFORM_OUTLINESIZE,
-  UNIFORM_OUTLINECOLOR,
-  UNIFORM_COUNT,
-  UNIFORM_NONE
-} ShaderUniform;
-
-typedef enum{
-  STANDARD_INT,
-  STANDARD_FLOAT,
-  STANDARD_UINT,
-  STANDARD_BOOL,
-  STANDARD_VEC2,
-  STANDARD_VEC3,
-  STANDARD_VEC4,
-}UniformTypes;
-
-typedef struct{
-  ShaderUniform uniform;
-  UniformTypes  type;
-  void*         val;
-}shader_uniform_t;
-
-static ShaderTypeAlias shader_alias[SHADER_DONE] = {
-  {"base", SHADER_BASE},
-  {"bloom", SHADER_BLOOM},
-  {"blur", SHADER_BLUR},
-  {"invert", SHADER_INVERT},
-  {"outline", SHADER_OUTLINE},
-};
-
-ShaderType ShaderTypeLookup(const char* name);
-
-typedef struct{
-  ShaderType        stype;
-  int               version;
-  Shader            shader;
-  const char*       vs_path;
-  const char*       fs_path;
-  shader_uniform_t  uniforms[UNIFORM_NONE];
-}gl_shader_t;
-extern gl_shader_t shaders[SHADER_DONE];
-
-void InitShaderChainCache(ShapeID,int maxWidth, int maxHeight);
-void InitShaders();
-void LoadShaders();
-void ShaderSetUniforms(gl_shader_t *s, Texture2D texture);
-//<=====SHADERS====
 
 typedef struct{
   int     duration;
@@ -196,56 +142,8 @@ typedef struct {
   Rectangle bounds;
   Vector2   offset;
   float     scale;
+  Color     color;
 } sprite_slice_t;
-
-typedef enum {
-  SLICE_NONE =-1,
-  SLICE_TOP_LEFT,
-  SLICE_TOP_MID,
-  SLICE_TOP_RIGHT,
-  SLICE_EDGE_LEFT,
-  SLICE_CENTER,
-  SLICE_EDGE_RIGHT,
-  SLICE_BOT_LEFT,
-  SLICE_BOT_MID,
-  SLICE_BOT_RIGHT,
-  SLICE_ALL
-}SliceParts;
-
-typedef enum{
-  SCALE_NONE,
-  SCALE_STRETCH_W,
-  SCALE_STRETCH_H,
-  SCALE_NORMAL
-}ScalingType;
-
-typedef struct {
-  ScalingType      scaling[SLICE_ALL];
-  sprite_slice_t   *slices[SLICE_ALL];
-  float             scale;
-} scaling_slice_t;
-
-typedef struct{
-  scaling_slice_t *sprites[ELEMENT_COUNT];
-  Texture2D       *sprite_sheet;
-}scaling_sprite_data_t;
-
-typedef struct{
-  SliceParts  type;
-  ScalingType rules;
-}scaling_rules_t;
-
-static scaling_rules_t scaling_rules[SLICE_ALL] = {
-  {SLICE_TOP_LEFT, SCALE_NONE},
-  {SLICE_TOP_MID, SCALE_STRETCH_W},
-  {SLICE_TOP_RIGHT, SCALE_NONE},
-  {SLICE_EDGE_LEFT, SCALE_STRETCH_H},
-  {SLICE_CENTER, SCALE_NORMAL},
-  {SLICE_EDGE_RIGHT,SCALE_STRETCH_H},
-  {SLICE_BOT_LEFT, SCALE_NONE},
-  {SLICE_BOT_MID,  SCALE_STRETCH_W},
-  {SLICE_BOT_RIGHT, SCALE_NONE}
-};
 
 typedef struct{
   int             num_sprites;
@@ -253,9 +151,17 @@ typedef struct{
   Texture2D       *sprite_sheet;
 }sprite_sheet_data_t;
 
-extern sprite_sheet_data_t shapedata;
-extern sprite_sheet_data_t tiledata;
-void SpriteLoadSubTextures(sprite_sheet_data_t *out, int sheet_id);
+typedef enum{
+  SHEET_UI,
+  SHEET_ICON,
+  SHEET_TILE,
+  SHEET_CHAR,
+  SHEET_ALL
+}SheetID;
+
+static sprite_sheet_data_t SHEETS[SHEET_ALL];
+void SpriteLoadSubTextures(sub_texture_t* data, SheetID id, int sheet_cap);
+
 void SpriteLoadSlicedTextures();
 //SPRITE_T===>
 typedef struct {
@@ -264,7 +170,6 @@ typedef struct {
   anim_t          *anim;
   Texture2D       *sheet;
   sprite_slice_t* slice;
-  gl_shader_t*    gls[SHADER_DONE];
   bool            is_visible;
   float           rot;
   Vector2         offset;
@@ -274,17 +179,18 @@ typedef struct {
 } sprite_t;
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
-void DrawNineSlice(scaling_slice_t *spr, Rectangle dst);
-sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data);
+sprite_t* InitSpriteByID(int id, SheetID);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
-scaling_slice_t* InitScalingElement(ElementID id);
+sprite_t* InitAnimationByID(CharacterSprite[12], int, SheetID);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
-void SpriteSync(sprite_t *spr);
+void SpriteSync(struct ent_s* e, sprite_t *spr);
 bool SpriteSetAnimState(sprite_t* spr, AnimState s);
 bool SpriteCanChangeState(AnimState old, AnimState s);
 void SpriteAnimate(sprite_t *spr);
 void SpritePreprocessImg(Image *img, Texture2D* out);
+
+
 //====SPRITE_T>>
 #endif

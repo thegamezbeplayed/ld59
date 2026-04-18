@@ -5,10 +5,13 @@
 #include "game_helpers.h"
 #include "game_utils.h"
 #include "game_ui.h"
+#include "game_control.h"
 
+world_t world;
 game_process_t game_process;
 TreeCacheEntry tree_cache[18] = {0};
 int tree_cache_count = 0;
+ent_t* player = NULL;
 
 bool TogglePause(ui_menu_t* m){
   if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY)
@@ -28,10 +31,12 @@ void GameSetState(GameState state){
 
 void GameReady(void *context){
   WorldInitOnce();
+  world.stage = 0;
+  world.levels[0] = InitLevel(0);
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
+  LevelReady(WorldGetLevel());
 }
 
-static world_t world;
 
 void AddFloatingText(render_text_t *rt){
   for (int i = 0; i < MAX_EVENTS; i++){
@@ -44,198 +49,6 @@ void AddFloatingText(render_text_t *rt){
   }
 }
 
-void WorldTurnAddMatch(ent_t* e, bool color_matches){
-  Cell epos = e->intgrid_pos;
-  int cell = 0;
-  if(world.grid.matches[0][epos.x][epos.y])
-    cell = 1;
-
-    world.grid.matches[cell][epos.x][epos.y] = e;
-    if(color_matches)
-      world.grid.color_matches[cell][epos.x][epos.y] = true;
-
-}
-
-float WorldGetGridCombo(Cell intgrid){
-  grid_combo_t *grid = world.grid.combos[intgrid.x][intgrid.y];
-
-  return grid->color_mul->current + grid->type_mul->current;
-}
-
-
-bool WorldGetShapeMoves(int y, int x){
-    ent_t *shape = world.grid.combos[x][y]->tile->child;
-
-    return shape->control->moves > 0;
-}
-
-int WorldCalcMatchCombos(void){
-
-  int matched = 0;
-  bool calculated[GRID_WIDTH][GRID_HEIGHT]={0};
-  for (int i = 0; i < 2; i++)
-  for (int x = 0; x < GRID_WIDTH; x++)
-    for (int y = 0; y < GRID_HEIGHT; y++){
-      if(!world.grid.matches[i][x][y]){
-       continue;
-      }
-      if(!calculated[x][y])
-        matched++;
-      
-      calculated[x][y] = true;
-
-      StatIncrementValue(world.grid.combos[x][y]->type_mul,true);
-      if(world.grid.color_matches[i][x][y])
-        StatIncrementValue(world.grid.combos[x][y]->color_mul,true);
-    }
-
-  for (int x = 0; x < GRID_WIDTH; x++)
-    for (int y = 0; y < GRID_HEIGHT; y++)
-      if(calculated[x][y]){
-        SetState(world.grid.combos[x][y]->tile->child,STATE_DIE,EntAddPoints);
-      }
-      else{
-        if(world.grid.combos[x][y]->tile->child->control->moved){
-          StatEmpty(world.grid.combos[x][y]->type_mul);
-          StatEmpty(world.grid.combos[x][y]->color_mul);
-        }
-        
-        SetState(world.grid.combos[x][y]->tile->child,STATE_IDLE,NULL);
-        SetState(world.grid.combos[x][y]->tile,STATE_IDLE,NULL);
-      }
-  int groups = matched /3;
-  bool remainder = (matched %3)>0;
-
-  if(remainder)
-    groups++;
-  
-  return groups;  
-}
-
-Cell WorldGetMaxShapes(){
-  return (Cell){(int)world.max_shape->current,(int)world.max_color->current};
-}
-
-int WorldGetShapeSums(int* out){
-  for (int x = 0; x < GRID_WIDTH; x++){
-    for (int y = 0; y < GRID_HEIGHT; y++){
-      ent_t* t = world.grid.combos[x][y]->tile;
-      if(!t->child)
-        continue;
-      ShapeFlags s = SHAPE_TYPE(t->child->shape);
-      out[s]++;
-    }
-  }
-
-  return (int)world.max_shape->current;
-}
-
-void WorldClearMatches(void){
-
-  for (int i = 0; i < 2; i++){
-    for(int x = 0; x < GRID_WIDTH;x++){
-      for (int y = 0; y < GRID_HEIGHT; y++){
-        world.grid.matches[i][x][y]=NULL;
-        world.grid.color_matches[i][x][y]=false;
-        if(world.grid.combos[x][y]->tile->child)
-          world.grid.combos[x][y]->tile->child->control->moved = false;
-        
-        world.grid.combos[x][y]->type_mul->increment=0.125f*world.max_shape->current;
-        world.grid.combos[x][y]->color_mul->increment=0.25f*(((int)world.max_color->current)>>4);
-
-      }
-    }
-  }
-}
-
-int WorldGetMatches(void){
-
-  int matches = 0;
-  for (int i = 0; i < 2; i++){
-    for(int x = 0; x < GRID_WIDTH;x++){
-      for (int y = 0; y < GRID_HEIGHT; y++){
-        if(world.grid.matches[i][x][y]==NULL)
-          continue;
-
-        matches++;
-      }
-    }
-  }
-      
-  return matches;
-}
-
-bool TurnSetState(TurnState state){
-  if(!TurnCanChangeState(state))
-    return false;
-
-  world.grid.state = state;
-
-  TraceLog(LOG_INFO,"Turn State now - %s",turn_name[state].name);
-  TurnOnChangeState(state);
-  return true;
-}
-
-bool TurnCanChangeState(TurnState state){
-  if(state == world.grid.state)
-    return false;
-
-  state_change_requirement_t *req = &turn_reqs[state];
-  return req->can(world.grid.state, req->required);
-}
-
-bool WorldCheckNewGrid(void){
-  ShapeID grid[GRID_HEIGHT][GRID_WIDTH];
-  int moves[GRID_HEIGHT][GRID_WIDTH];
-
-  for(int x = 0; x < GRID_WIDTH; x++)
-    for (int y = 0 ; y < GRID_HEIGHT; y++){
-      grid[x][y] = world.grid.combos[x][y]->tile->child->shape;
-      moves[x][y] = world.grid.combos[x][y]->tile->child->control->moves;
-    }
-  return CanBeSolvedInMoves(grid,moves,4);
-}
-
-void TurnOnChangeState(TurnState state){
-  switch(state){
-    case TURN_START:
-      if(WorldCheckNewGrid())
-        TurnSetState(TURN_INPUT);
-      else
-        MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
-      break;
-    case TURN_SCORE:
-      int turn_matches = WorldCalcMatchCombos();
-      if(turn_matches > 0)
-        world.combo_streak+=turn_matches;
-      else
-        world.combo_streak =0;
-      TurnSetState(TURN_END);
-      break;
-    case TURN_END:
-      world.grid.turn++;
-      if(world.grid.turn%13==0)
-        StatIncrementValue(world.max_color,true);
-      if (world.grid.turn%27==0)
-        StatIncrementValue(world.max_shape,true);
-      TurnSetState(TURN_STANDBY);
-      break;
-    case TURN_STANDBY:
-      WorldClearMatches();
-      break;
-    default:
-      break;
-  }
-}
-
-TurnState TurnGetState(void){
-  return world.grid.state;
-}
-
-bool CheckWorldGridAdjacent(ent_t* e, ent_t* other){
-
-  return is_adjacent(e->intgrid_pos,other->intgrid_pos);
-}
 
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params){
   int num_results = 0;
@@ -326,18 +139,7 @@ int AddSprite(sprite_t *s){
   return -1;
 }
 
-ObjectInstance GetObjectInstanceByShapeID(ShapeID id){
-  for (int i = SHAPE_NONE; i<SHAPE_COUNT;i++){
-    if(room_instances[i].id != id)
-      continue;
-
-    return room_instances[i];
-  }
-  
-  return room_instances[0];
-}
-
-bool RegisterEnt( ent_t *e){
+bool RegisterEnt( ent_t *e, Cell pos){
   e->uid = AddEnt(e);
 
   if(e->sprite)
@@ -349,28 +151,28 @@ bool RegisterEnt( ent_t *e){
 bool RegisterSprite(sprite_t *s){
   s->suid = AddSprite(s);
 
+  s->is_visible = true;
   return s->suid > -1;
+}
+
+game_object_uid_i RegisterMapCell(map_cell_t* mc){
+  return GameObjectMakeUID("MAP_CELL", IntGridIndex(mc->coords.x, mc->coords.y), WorldGetTime());
 }
 
 void WorldInitOnce(){
   InteractionStep();
 
-  TurnSetState(TURN_INPUT);
+  InitInput(player);
+
 }
 
 void WorldPreUpdate(){
-  if(TurnGetState()==TURN_STANDBY){
-    ent_t* tile_pool[GRID_WIDTH*GRID_HEIGHT];
-    int num_empty = WorldGetEnts(tile_pool,FilterEmptyTile,NULL);
-    if (num_empty == 0)
-      TurnSetState(TURN_START);
-  }
-
   InteractionStep();
+  InputCheck(WorldGetTurn());
   
-  for(int i = 0; i < world.num_spr; i++){
+  /*for(int i = 0; i < world.num_spr; i++){
     SpriteSync(world.sprs[i]);
-  }
+  }*/
 }
 
 void WorldFixedUpdate(){
@@ -406,31 +208,6 @@ void WorldPostUpdate(){
 
 void InitWorld(world_data_t data){
   world = (world_t){0};
-  world.combo_streak = 0;
-  world.combo_mul=InitStatOnMin(STAT_COMBO_MUL,1.0f,16.0F);
-  world.combo_mul->increment = 0.25f;
-  world.max_shape = InitStatOnMin(STAT_MAX_TYPE,SHAPE_TYPE_STUD,SHAPE_TYPE_MAX);
-  world.max_color = InitStatOnMin(STAT_MAX_COLOR,SHAPE_COLOR_GRAY,SHAPE_COLOR_MAX);
-
-  world.max_color->increment = 16;
-
-  for(int y = 0; y < GRID_HEIGHT; y++)
-    for(int x = 0; x < GRID_WIDTH; x++){
-      //Vector2 pos = {x*cs + gridStart.x,y*cs+gridStart.y};
-      ent_t* tile = InitEntStatic(BASE_TILE,VECTOR2_ZERO);
-      tile->intgrid_pos = (Cell){x,y};
-      ElementAddGameElement(tile);
-      RegisterEnt(tile);
-      world.grid.combos[x][y] = malloc(sizeof(grid_combo_t));
-      world.grid.combos[x][y]->tile = tile;
-      world.grid.combos[x][y]->type_mul = InitStatOnMin(STAT_TYPE_MUL,1.0f,10.0f);
-      world.grid.combos[x][y]->color_mul = InitStatOnMin(STAT_COLOR_MUL,1.0f,10.0f);
-      world.grid.combos[x][y]->type_mul->increment=0.25f;
-      world.grid.combos[x][y]->color_mul->increment=0.5f;
-    }
-
-  for (int i = 0; i < data.num_ents; i++)
-    RegisterEnt(InitEnt(data.ents[i]));
 }
 
 void FreeWorld(){
@@ -451,14 +228,6 @@ void WorldRender(){
       DrawSprite(world.sprs[i]);
     else
       i-=RemoveSprite(i);
-
-  for(int i = 0; i < MAX_EVENTS; i++){
-    if(!world.floatytext_used[i])
-      continue;
-    render_text_t rt = *world.texts[i];
-    DrawTextEx(ui.font,rt.text, rt.pos,rt.size,1,rt.color);
-  }
-
 }
 
 void InitGameProcess(){
@@ -514,8 +283,6 @@ void InitGameEvents(){
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
   game_process.game_frames = 0; 
-  MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
-  MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_READY);
 }
 
 bool GameTransitionScreen(){
@@ -570,47 +337,12 @@ void GameProcessEnd(){
   FreeInteractions();
 }
 
-void AddPoints(float mul,float points, Vector2 pos){
-  //TraceLog(LOG_INFO,"===Add %0.2f Points===",points*mul);
-  mul+=world.combo_mul->current;
-  world.points+=mul*points;
-
-  render_text_t *rt = malloc(sizeof(render_text_t));
-  *rt = (render_text_t){
-    .text = strdup(TextFormat("+%d",(int)(points*mul))),
-    .pos = pos,
-    .size = 54,
-    .color =YELLOW,
-    .duration = (int)(45+mul*9)
-  };
-  AddFloatingText(rt);
-  UploadScore();
+void GameProcessAddEvent(ProcessType t, cooldown_t* cd){
+  AddEvent(game_process.events, cd);
 }
 
-ShapeFlags WorldGetPossibleShape(){
-  return world.max_shape->current;
+ent_t* WorldPlayer(void){
+  return player;
 }
 
-const char* GetGameTime(){
-  return TextFormat("%09i",(int)(game_process.game_frames/fixedFPS));
-}
 
-const char* GetPoints(){
-  return TextFormat("%08i",GetPointsInt());
-}
-
-const char* GetTurn(){
-  return turn_name[world.grid.state].name;
-}
-
-const char* GetComboStreak(){
-  return TextFormat("%02i",GetComboInt());
-}
-
-int GetComboInt(){
-  return world.combo_streak;
-
-}
-int GetPointsInt(){
-  return (int)world.points;
-}

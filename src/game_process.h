@@ -3,52 +3,21 @@
 
 #include "game_types.h"
 #include "game_common.h"
+#include "game_systems.h"
 #include "room_data.h"
 #include "screens.h"
+#include "game_gen.h"
 
 #define MAX_INTERACTIONS 256
 #define DEBUG false
 static int CURRENT_ENT_IDENTIFIER = 0;
+extern ent_t* player;
 
 extern Font font;
 static int fixedFPS = 60;
 
 typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
-bool CheckWorldGridAdjacent(ent_t* e, ent_t* other);
-
-static bool FilterEmptyTile(ent_t* e, ent_t* other){
-  if(e->state != STATE_EMPTY)
-    return false;
-
-  if(e->type != ENT_TILE)
-    return false;
-
-  return true;
-}
-
-static bool FilterEntShape(ent_t* e,ent_t* other){
-  if(e->state < STATE_IDLE || e->state > STATE_SCORE)
-    return false;
-  
-  if(e->type == ENT_SHAPE)
-    return true;
-  else
-    return false;
-}
-
-static bool FilterEntNeighbor(ent_t* e,ent_t* other){
-  if(e->type!= other->type)
-    return false;
-
-  if(e->uid == other->uid)
-    return false;
-
-  if(CheckWorldGridAdjacent(e, other))
-    return true;
-
-  return false;
-}
 
 //INTERACTIONS_T===>
 typedef struct {
@@ -116,81 +85,48 @@ typedef struct{
   UpdateFn       update_steps[SCREEN_DONE][UPDATE_DONE];
   UpdateFn       finish[SCREEN_DONE];
 }game_process_t;
-
+extern game_process_t game_process;
 void InitGameEvents();
 void InitGameProcess();
 void GameProcessStep();
 void GameProcessSync(bool wait);
 bool GameTransitionScreen();
 void GameProcessEnd();
-
-void AddPoints(float mul,float points,Vector2 pos);
-int GetPointsInt();
-int GetComboInt();
-const char* GetPoints();
-const char* GetTurn();
-const char* GetGameTime();
-const char* GetComboStreak();
+void GameProcessAddEvent(ProcessType, cooldown_t*);
 //===WORLD_T===>
-
 typedef struct{
-  ObjectInstance  ents[SHAPE_DONE];
+  int         turn;
+  Cell        start_pos;
+  event_bus_t *events;
+}level_t;
+level_t* InitLevel(Levels id);
+void LevelReady(level_t* l);
+void LevelEventOnce(EventType type, void* data, uint64_t uid);
+void LevelEvent(EventType type, void* data, uint64_t uid);
+void LevelTargetSubscribe(EventType, EventCallback, void*, uint64_t);
+void LevelSubscribe(EventType event, EventCallback cb, void* data);
+void LevelStartCooldown(cooldown_t* cd);
+typedef struct{
   unsigned int    num_ents;
 }world_data_t;
 
-typedef struct{
-  ent_t*      tile;
-  ShapeFlags  bonus_color,bonus_type;
-  stat_t      *color_mul,*type_mul;
-}grid_combo_t;
-
-typedef struct{
-  TurnState     state;
-  int           turn;
-  int           turn_connections;
-  ent_t         *matches[2][GRID_WIDTH][GRID_HEIGHT];
-  bool          color_matches[2][GRID_WIDTH][GRID_HEIGHT];
-  grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
-}grid_manager_t;
-
-int GridCompare(ent_t* start, int num_others,ent_t** others, Cell* results);
-int GridGetRow(int row, ent_t** out);
-int GridGetCol(int col, ent_t** out);
-
-bool TurnSetState(TurnState state);
-bool TurnCanChangeState(TurnState state);
-void TurnOnChangeState(TurnState state);
-TurnState TurnGetState();
-
 typedef struct world_s{
-  grid_manager_t grid;
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
   sprite_t*     sprs[MAX_ENTS];
   unsigned int  num_spr;
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
-  float         points;
-  stat_t*        max_shape,*max_color;
-  int           combo_streak;
-  stat_t        *combo_mul;
+  level_t       *levels[LVL_ALL];
+  Levels        stage;
 } world_t;
+extern world_t world;
 
-Cell WorldGetMaxShapes();
-ent_t* WorldGetEnt(const char* name);
-ShapeFlags WorldGetPossibleShape();
-ent_t* WorldGetEntById(unsigned int uid);
-float WorldGetGridCombo(Cell intgrid);
-void WorldTurnAddMatch(ent_t* e, bool color_matches);
+ent_t* WorldPlayer(void);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
-bool WorldTestGrid(void);
-bool CheckWorldTilesReady(void);
-bool WorldCheckGrid(ent_t *e, ent_t* owner);
-int WorldGetShapeSums(int* out);
-bool WorldGetShapeMoves(int y, int x);
-void WorldCalcGrid();
 bool RegisterBehaviorTree(BehaviorData data);
-bool RegisterEnt( ent_t *e);
+bool RegisterEnt( ent_t *e, Cell pos);
+game_object_uid_i RegisterMapCell(map_cell_t*);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();
 void WorldPreUpdate();
@@ -199,7 +135,25 @@ void WorldPostUpdate();
 void InitWorld(world_data_t data);
 void WorldRender();
 Rectangle WorldRoomBounds();
+static int WorldGetTime(){
+  return game_process.game_frames;
+}
 
-ObjectInstance GetObjectInstanceByShapeID(ShapeID id);
+static level_t* WorldGetLevel(void){
+  return world.levels[world.stage];
+}
+
+static int WorldGetTurn(){
+  if(world.levels[world.stage])
+    return world.levels[world.stage]->turn;
+
+  return 0;
+}
+
+static void CooldownEmit(void* params){
+  cooldown_t* cd = params;
+  LevelEvent(cd->type, cd, cd->uid);
+}
+
 #endif
 

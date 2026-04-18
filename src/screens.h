@@ -15,50 +15,34 @@ static float SPRITE_SCALE = 1.0f;
 static float UI_SCALE = 1.0f;
 
 typedef struct{
+  Camera2D        *camera;
+  Cell            size,pos,target;
+  Rectangle       view,bounds;
+  bool            mode;
+  RenderTexture2D render;
+}camera_t;
+
+void InitCamera(float zoom, float rot, Vector2 offset, Vector2 target);
+void ScreenCameraSync(Cell target);
+void ScreenCameraToggle(void);
+bool ScreenCameraSetView(Cell v);
+void ScreenCameraSetBounds(Cell b);
+Rectangle ScreenGetCameraView(void);
+void ScreenRender(void);
+
+typedef struct{
   bool    is_dragging;
   Vector2 offset,pos;
   ent_t   *target;
   ent_t   *hover;
 }mouse_controller_t;
 
-typedef enum{
-  SIZE_GRID,
-  SIZE_CELL,
-  SIZE_SCALE,
-  SIZE_UI,
-  SIZE_FONT,
-  SIZE_ALL
-}PlaySizes;
-
-typedef enum{
-  AREA_PLAY,
-  AREA_UI,
-  AREA_ALL
-}ScreenArea;
-
-typedef float (*PlaySizeSync)(PlaySizes);
-typedef struct{
-  Rectangle      area[AREA_ALL];
-  float          sizes[SIZE_ALL];
-  PlaySizeSync   get_size;
-}play_area_t;
-float GetApproxDPIScale(void);
-void InitPlayArea(void);
-void ScreenCalcAreas(void);
-Vector2 ScreenAreaStart(ScreenArea t);
-float ScreenSized(PlaySizes s);
-
-void InitScreenInteractive(void);
-void ScreenSyncMouse(void);
-ent_t* ScreenEntMouseCollision(void);
-ent_t* ScreenEntMouseHover(void);
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef enum {
   SCREEN_LOGO,
   SCREEN_TITLE,
-  SCREEN_OPTIONS,
   SCREEN_GAMEPLAY,
   SCREEN_ENDING,
   SCREEN_DONE

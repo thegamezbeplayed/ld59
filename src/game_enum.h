@@ -1,0 +1,113 @@
+#ifndef __GAME_ENUM__ 
+#define __GAME_ENUM__ 
+
+#define BIT64(n) (1ULL << (n))
+
+typedef enum{
+  EVENT_GAME_PROCESS,
+  EVENT_INTERACTION,
+  EVENT_PLAY_SFX,
+  EVENT_SONG_END,
+  EVENT_SONG_FADE_IN,
+  EVENT_SONG_FADE_OUT,
+  EVENT_WAIT,
+  EVENT_FINISH,
+  EVENT_ENT_ACTION,
+  EVENT_LEVEL_TURN_END,
+  EVENT_NONE,
+  MAX_EVENTS,
+} EventType;
+
+typedef enum{
+  ENT_NONE,
+  ENT_PLAYER,
+  ENT_TILE,
+  ENT_DONE
+}EntityType;
+
+typedef enum{
+  BEHAVIOR_NONE,
+  BEHAVIOR_CHANGE_STATE,
+  BEHAVIOR_COUNT
+}BehaviorID;
+
+typedef enum{
+  PARAM_NONE,
+  PARAM_POS,
+  PARAM_NAME,
+  PARAM_STATE,
+  PARAM_ALL,
+}GameObjectParam;
+
+typedef enum {
+  DATA_NONE,
+  DATA_ARRAY,
+  DATA_PARAM,
+  DATA_INT,
+  DATA_FLOAT,
+  DATA_BOOL,
+  DATA_PTR,
+  DATA_CELL,
+  DATA_UINT64,
+  DATA_GOUID,
+  DATA_STRING,
+  DATA_ENT,
+  DATA_ENV,
+  DATA_MAP_CELL,
+  DATA_ELEM,
+  DATA_ALL,
+} DataType;
+
+typedef enum{
+  CHAR_NONE,
+  CHAR_DOWN_0,
+  CHAR_DOWN_1,
+  CHAR_DOWN_2,
+  CHAR_LEFT_0,
+  CHAR_LEFT_1,
+  CHAR_LEFT_2,
+  CHAR_RIGHT_0,
+  CHAR_RIGHT_1,
+  CHAR_RIGHT_2,
+  CHAR_UP_0,  
+  CHAR_UP_1,  
+  CHAR_UP_2,
+  CHAR_DONE  
+}CharacterSprite;
+
+typedef enum{
+  TILE_BLANK,
+  TILE_DONE
+}Tiles;
+
+typedef enum{
+  LVL_ONE,
+  LVL_ALL,
+}Levels;
+
+typedef enum{
+  TILE_EMPTY,
+  TILE_SUCCESS,
+  TILE_ISSUES,
+  TILE_COLLISION,
+  TILE_OCCUPIED,
+  TILE_REACHABLE,
+  TILE_BORDER,
+  TILE_OUT_OF_BOUNDS,
+  TILE_ERROR,
+  TILE_UNREACHABLE
+}TileStatus;
+
+typedef enum{
+  ACT_NONE,
+  ACT_MOVE,
+  ACT_DONE
+}ActionType;
+
+typedef enum{
+  EVS_NONE,
+  EVS_KILL
+}EventStatus;
+  
+#endif
+

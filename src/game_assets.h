@@ -7,9 +7,12 @@
 #include "game_common.h"
 
 #define MAX_SONGS 4
+#define MAX_ANIM_FRAMES 4
 #define MAX_SPRITES 64
 
-struct ent_s;
+typedef struct ent_s ent_t;
+typedef struct sprite_s sprite_t;
+
 typedef struct sub_texture_s {
     int tag;
     int originX, originY;
@@ -35,21 +38,28 @@ void AddFloatingText(render_text_t *rt);
 
 void InitResources();
 
-typedef enum{
-  ANIM_NONE,
-  ANIM_IDLE,
-  ANIM_BOUNCE,
-  ANIM_RETURN,
-  ANIM_DONE,
-  ANIM_COUNT
-}AnimState;
-
+typedef void (*OnAnimCallback)(ent_t*, sprite_t*);
 typedef struct{
-  int duration;
-  int elapsed;
-
+  int             num_seq, cur_index;
+  CharacterSprite frames[12];
+  int             duration;
+  int             elapsed;
+  float           speed;
+  OnAnimCallback  on_step, on_end_seq, on_complete;
 }anim_t;
 
+typedef struct{
+  int                num_seq, cur_seq;
+  anim_t             *anims[ANIM_SEQ_ALL];
+  sprite_t           *sequences[ANIM_SEQ_ALL][MAX_ANIM_FRAMES];
+}anim_player_t;
+
+typedef struct{
+  AnimSequence seq;
+  int          indexes[4];
+}anim_set_d;
+
+extern anim_set_d DEF_ANIM[ANIM_SEQ_ALL];
 typedef struct{
   int     duration;
   int     elapsed;
@@ -165,19 +175,18 @@ void SpriteLoadSubTextures(sub_texture_t* data, SheetID id, int sheet_cap);
 
 void SpriteLoadSlicedTextures();
 //SPRITE_T===>
-typedef struct {
+struct sprite_s{
   int             suid;
-  AnimState       state;
-  anim_t          *anim;
+  AnimSequence    state;
+  anim_player_t   *anim;
   Texture2D       *sheet;
   sprite_slice_t* slice;
   bool            is_visible;
   float           rot;
-  Vector2         offset;
-  Vector2         pos;
+  Vector2         pos, offset, dest;
   RenderLayer     layer;
   struct ent_s    *owner;
-} sprite_t;
+};
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
 sprite_t* InitSpriteByID(int id, SheetID);
@@ -187,9 +196,10 @@ bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
 void SpriteSync(struct ent_s* e, sprite_t *spr);
-bool SpriteSetAnimState(sprite_t* spr, AnimState s);
-bool SpriteCanChangeState(AnimState old, AnimState s);
-void SpriteAnimate(sprite_t *spr);
+bool SpriteSetAnimSequence(sprite_t* spr, AnimSequence s);
+bool SpriteCanChangeState(sprite_t*, AnimSequence old, AnimSequence s);
+sprite_t* SpriteAnimate(sprite_t *spr);
+void SpriteAnimateTo(sprite_t *spr, Cell from, Cell to);
 void SpritePreprocessImg(Image *img, Texture2D* out);
 
 

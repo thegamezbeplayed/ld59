@@ -8,7 +8,6 @@
 void InitEndScreen(void)
 {
   MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
-  UploadScore();
 }
 
 // Title Screen Update logic

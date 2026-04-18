@@ -87,6 +87,16 @@ void OnLevelEvent(event_t *e, void* user){
       TraceLog(LOG_INFO, "you did it");
       LevelEvent(EVENT_LEVEL_END, l, l->id);
       break;
+    case EVENT_TILE_INSERT:
+      map_cell_t* m = WorldGetTile(e->iuid);
+      ent_t* slab = e->data;
+      if(MapSetTile(WorldGetMap(), TILE_BLANK, m->coords) < TILE_ISSUES){
+        MapRemoveOccupant(WorldGetMap(), slab->pos);
+        SetState(slab, STATE_DIE,NULL);
+        
+      }
+
+      break;
   }
 }
 
@@ -169,6 +179,7 @@ void LevelReady(level_t* l){
   LevelSubscribe(EVENT_LEVEL_SHIFT, OnLevelEvent, l);
   LevelSubscribe(EVENT_LEVEL_CHECK, OnLevelEvent, l);
   LevelSubscribe(EVENT_LEVEL_SOLVED, OnLevelEvent, l);
+  LevelSubscribe(EVENT_TILE_INSERT, OnLevelEvent, l);
 }
 
 void LevelEventOnce(EventType type, void* data, uint64_t uid){

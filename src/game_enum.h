@@ -13,12 +13,14 @@ typedef enum{
   EVENT_WAIT,
   EVENT_FINISH,
   EVENT_ENT_ACTION,
+  EVENT_ENT_DIE,
   EVENT_LEVEL_TURN_END,
   EVENT_LEVEL_SHIFT,
   EVENT_LEVEL_CHECK,
   EVENT_LEVEL_SOLVED,
   EVENT_LEVEL_END,
   EVENT_TILE_COLLISION,
+  EVENT_TILE_INSERT,
   EVENT_SHIFT_SLAB,
   EVENT_NONE,
   MAX_EVENTS,
@@ -36,7 +38,6 @@ typedef enum{
   STATE_SPAWN,//Should only be set after NONE
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_PUSHING,
-  STATE_PLACED,
   STATE_SHIFTING,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
@@ -93,6 +94,16 @@ typedef enum{
 }CharacterSprite;
 
 typedef enum{
+  ANIM_SEQ_NONE,
+  ANIM_SEQ_GO_L,
+  ANIM_SEQ_GO_U,
+  ANIM_SEQ_GO_R,
+  ANIM_SEQ_GO_D,
+  ANIM_SEQ_ALL
+}AnimSequence;
+
+typedef enum{
+  TILE_VOID = -1,
   TILE_BLANK,    
 
   SLAB_ALGIZ,    
@@ -147,6 +158,7 @@ typedef enum{
   TILE_EMPTY,
   TILE_SUCCESS,
   TILE_ISSUES,
+  TILE_NO_ENTRY,
   TILE_COLLISION,
   TILE_OCCUPIED,
   TILE_REACHABLE,

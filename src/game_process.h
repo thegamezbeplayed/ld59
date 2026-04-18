@@ -130,8 +130,6 @@ typedef struct{
 typedef struct world_s{
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
-  sprite_t*     sprs[MAX_ENTS];
-  unsigned int  num_spr;
   hash_map_t    ent_map, tile_map;
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
@@ -145,7 +143,6 @@ int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 bool RegisterBehaviorTree(BehaviorData data);
 game_object_uid_i RegisterEnt( ent_t *e, Cell pos);
 game_object_uid_i RegisterMapCell(map_cell_t*);
-bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();
 void WorldPreUpdate();
 void WorldFixedUpdate();

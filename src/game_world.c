@@ -15,7 +15,6 @@ ent_t* player = NULL;
 
 void WorldReset(void* param){
   world.num_ent = 0;
-  world.num_spr = 0;
 
   HashClear(&world.ent_map);
   HashClear(&world.tile_map);
@@ -116,22 +115,6 @@ ent_t* WorldGetEntById(unsigned int uid){
   return NULL;
 }
 
-int RemoveSprite(int index){
-  int last_pos = world.num_spr -1;
-  
-  if(!FreeSprite(world.sprs[index]))
-    return 0;
-
-  world.num_spr--;
-  if(index!=last_pos){
-    world.sprs[index] = world.sprs[last_pos];
-    return 1;
-  }
- 
-  return 0;
-  
-}
-
 int RemoveEnt(int index){
   int last_pos = world.num_ent -1;
 
@@ -159,35 +142,14 @@ int AddEnt(ent_t *e) {
   return -1;
 } 
 
-int AddSprite(sprite_t *s){
-  if(world.num_spr < MAX_ENTS){
-    int index = world.num_spr;
-    world.sprs[world.num_spr++] = s;
-
-    return index;
-  }
-
-  return -1;
-}
-
 game_object_uid_i RegisterEnt( ent_t *e, Cell pos){
   e->uid = AddEnt(e);
 
   e->pos = pos;
-  if(e->sprite)
-    RegisterSprite(e->sprite);
-
   game_object_uid_i gouid = GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
 
   HashPut(&world.ent_map, gouid, e);
   return gouid;
-}
-
-bool RegisterSprite(sprite_t *s){
-  s->suid = AddSprite(s);
-
-  s->is_visible = true;
-  return s->suid > -1;
 }
 
 game_object_uid_i RegisterMapCell(map_cell_t* mc){
@@ -208,10 +170,6 @@ void WorldInitOnce(){
 void WorldPreUpdate(){
   InteractionStep();
   InputCheck(WorldGetTurn());
-  
-  /*for(int i = 0; i < world.num_spr; i++){
-    SpriteSync(world.sprs[i]);
-  }*/
 }
 
 void WorldFixedUpdate(){
@@ -219,9 +177,6 @@ void WorldFixedUpdate(){
     switch(world.ents[i]->state){
       case STATE_END:
         i-=RemoveEnt(i);
-        break;
-      case STATE_DIE:
-        EntDestroy(world.ents[i]);
         break;
       default:
         EntSync(world.ents[i]);
@@ -250,11 +205,6 @@ void InitWorld(world_data_t data){
 }
 
 void FreeWorld(){
-  for (int i = 0; i < world.num_spr; i++){
-    RemoveSprite(i);
-  }
-  world.num_spr = 0;
-
   for (int i = 0; i < world.num_ent; i++){
     RemoveEnt(i);
   }
@@ -266,8 +216,8 @@ void WorldRender(){
   if(!l)
     return;
   MapRender(l->map);
-  for(int i = 0; i < world.num_spr;i++)
-      DrawSprite(world.sprs[i]);
+  for(int i = 0; i < world.num_ent;i++)
+    EntRender(world.ents[i]);
 }
 
 void InitGameProcess(){

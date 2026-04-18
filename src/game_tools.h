@@ -56,6 +56,11 @@
 #define CellBoth(c, x, y) (Cell){(c.x+x),(c.y+y)}
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
 
+#define GRID_U  -1 
+#define GRID_D  1
+#define GRID_L  1000
+#define GRID_R  -1000
+
 #define HKEY_CELL(c) (hash_key_t){hash_combine_64(\
     hash_64_from_int(c.x), hash_64_from_int(c.y))}
 

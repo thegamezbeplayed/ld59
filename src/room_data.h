@@ -28,13 +28,24 @@ static level_layout_t LVLS[LVL_ALL] = {
   },
   {
     10,10,
-    {5,6},
+    {3,6},
     .tiles = {
+      [5][0] = TILE_VOID,
+      [5][1] = TILE_VOID,
+      [5][2] = TILE_VOID,
+      [5][3] = TILE_VOID,
+      [5][4] = TILE_VOID,
+      [5][5] = TILE_VOID,
+      [5][6] = TILE_VOID,
+      [5][7] = TILE_VOID,
+      [5][8] = TILE_VOID,
+      [5][9] = TILE_VOID,
       [1][1] = TILE_LAGUZ,
       [9][9] = TILE_SOL,
     },
     .slabs = {
       [4][3] = SLAB_SOL,
+      [2][2] = SLAB_LAGUZ,
       [7][8] = SLAB_LAGUZ,
     }
   

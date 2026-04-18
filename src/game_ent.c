@@ -15,7 +15,7 @@ ent_t* InitEnt(EntityType t){
     return NULL;
 
   e->type = t;
-  e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
+  e->base = e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
   e->control = InitController();
   SetState(e,STATE_SPAWN,NULL);
   return e;
@@ -25,8 +25,8 @@ ent_t* InitEntStatic(EntityType t, Tiles r){
   ent_t* e = GameCalloc("InitEnt", 1, sizeof(ent_t));
 
   e->type = t;
-  e->sprite = InitSpriteByID(r, SHEET_TILE);
-  e->sprite->owner = e;
+  e->base = InitSpriteByID(r, SHEET_TILE);
+  e->base->owner = e;
   e->control = InitController();
   e->signals = TILE_SIGNALS[r];
   SetState(e,STATE_SPAWN,NULL);
@@ -50,7 +50,7 @@ bool FreeEnt(ent_t* e){
   if(!e)
     return false;
 
-  free(e);
+  GameFree("FreeEnt",e);
   return true;
 }
 
@@ -65,7 +65,14 @@ void EntSync(ent_t* e){
   if(e->control)  
     EntControlStep(e);
 
-  SpriteSync(e, e->sprite);
+  SpriteSync(e, e->base);
+}
+
+void EntRender(ent_t* e){
+  if(!e->sprite)
+    DrawSprite(e->base);
+  else
+    DrawSprite(e->sprite);
 }
 
 void EntControlStep(ent_t *e){
@@ -97,10 +104,23 @@ void StepState(ent_t *e){
 }
 
 bool CanChangeState(EntityState old, EntityState s){
-  return true;
+  state_change_requirement_t req = CAN_CHANGE[s];
+  if(req.can)
+  return req.can(old, req.required);
+
+  TraceLog(LOG_WARNING, "IMPOSSIBLE STATE %i from %i", s, old);
+  return false;
 } 
 
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
+  switch(s){
+    case STATE_DIE:
+      EntDestroy(e);
+      LevelEvent(EVENT_ENT_DIE, e, e->gouid);
+      break;
+    default:
+      break;
+  }
 }
 
 bool CheckEntPosition(ent_t* e, Vector2 pos){
@@ -121,8 +141,9 @@ TileStatus EntGridStep(ent_t *e, Cell step){
   TileStatus status = MapSetOccupant(WorldGetMap(),e,newPos);
 
   if(status < TILE_ISSUES){
-    //map_cell_t* mc = &e->map->tiles[newPos.x][newPos.y];
     Cell oldPos = e->pos;
+    
+    //SpriteAnimateTo(e->base, oldPos, newPos);
     //WorldDebugCell(e->pos, YELLOW);
     e->pos = newPos;
     e->old_pos = oldPos;

@@ -2,6 +2,14 @@
 #include "game_types.h"
 #include "game_process.h"
 
+void OnMapCellEvent(event_t* ev, void* user){
+  map_cell_t* mc = user;
+  
+  mc->occupant = NULL;
+  if(mc->status == TILE_COLLISION)
+    mc->status = TILE_EMPTY;
+}
+
 void InitMap(void){
   for(int i = 0; i < TILE_DONE; i++){
     sprite_t* s = InitSpriteByID(i, SHEET_TILE);
@@ -34,8 +42,11 @@ map_grid_t* InitMapGrid(level_t* l){
 
       mc->gouid = RegisterMapCell(mc);
       
-      if(t == TILE_BLANK)
+      if(t <= TILE_BLANK){
+        if(t== TILE_VOID)
+        mc->status = TILE_NO_ENTRY;
         continue;
+      }
 
       Signals sig = TILE_SIGNALS[t];
       PuzzleRegisterSolution(l->puzzle, mc, sig);
@@ -68,6 +79,7 @@ void MapRender(map_grid_t* m){
     for(int y = 0; y < m->height; y++){
       map_cell_t* mc = &m->tiles[x][y];
 
+      if(mc->tile > TILE_VOID)
       MapCellRender(mc);
     }
  }
@@ -99,6 +111,9 @@ TileStatus MapSetTile(map_grid_t* m, Tiles t, Cell c){
   map_cell_t* mc = &m->tiles[c.x][c.y];
 
   mc->tile = t;
+  mc->sprite = InitSpriteByID(mc->tile, SHEET_TILE);
+  mc->sprite->pos = CellToVector2(c, CELL_WIDTH);
+
   if(TileHasFlag(t, TILEFLAG_SOLID))
     mc->status = TILE_COLLISION;
   else if(TileHasFlag(t, TILEFLAG_BORDER))
@@ -116,16 +131,21 @@ TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){
     return TILE_OUT_OF_BOUNDS;
 
   map_cell_t* mc = &m->tiles[c.x][c.y];
-  if(mc->status > TILE_ISSUES){
+
+  if(mc->status == TILE_NO_ENTRY && e->type == ENT_TILE){
+    LevelEvent(EVENT_TILE_INSERT, e, mc->gouid);
+    return TILE_NO_ENTRY;
+  }
+  else if(mc->status > TILE_ISSUES){
     if(mc->occupant)
-    LevelEvent(EVENT_TILE_COLLISION, e, mc->occupant->gouid);
+      LevelEvent(EVENT_TILE_COLLISION, e, mc->occupant->gouid);
     return TILE_OCCUPIED;
   }
-
+ 
   MapRemoveOccupant(m,e->pos);
   mc->occupant =e;
   mc->status = TILE_OCCUPIED;
-
+  LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid); 
   LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
   return TILE_SUCCESS;
 }

@@ -172,11 +172,6 @@ static param_t ParamClone(const param_t* src) {
     return p;
 }
 
-static int ParamScore(DataType type, param_t *a, param_t* b){
-  assert(a->type == type);
-  assert(b->type == type);
-
-}
 typedef bool (*ParamCompareFn)(param_t *a, param_t *b);
 static bool ParamCompareGreater(param_t *a, param_t *b){
   int aval = 0, bval = 0;
@@ -198,7 +193,9 @@ static bool ParamCompareGreater(param_t *a, param_t *b){
       aval = *ParamRead(a, int);
       bval = *ParamRead(b, int);
       break;
-
+    default:
+      return false;
+      break;
   }
   return GREATER_THAN(aval, bval);
 }

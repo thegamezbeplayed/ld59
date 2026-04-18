@@ -9,18 +9,22 @@ BehaviorStatus InputActionMove(ent_t* e, action_key_t akey, KeyboardKey k){
 
   switch(k){
     case KEY_A:
+    case KEY_H:
     case KEY_LEFT:
       dir = CELL_LEFT;
       break;
     case KEY_D:
+    case KEY_L:
     case KEY_RIGHT:
       dir = CELL_RIGHT;
       break;
     case KEY_W:
+    case KEY_J:
     case KEY_UP:
       dir = CELL_UP;
       break;
     case KEY_S:
+    case KEY_K:
     case KEY_DOWN:
       dir = CELL_DOWN;
       break;
@@ -41,7 +45,7 @@ void InitInput(ent_t* player){
   player_input.owner = player;
 
   player_input.actions[ACT_MOVE] = (action_key_t){
-    ACT_MOVE,8,{KEY_D,KEY_A,KEY_W,KEY_S,KEY_LEFT, KEY_RIGHT,KEY_UP,KEY_DOWN},InputActionMove, 0};
+    ACT_MOVE,12,{KEY_H, KEY_J, KEY_K, KEY_L, KEY_D,KEY_A,KEY_W,KEY_S,KEY_LEFT, KEY_RIGHT,KEY_UP,KEY_DOWN},InputActionMove, 0};
 
   player_input.active = true;
 }

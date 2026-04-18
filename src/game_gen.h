@@ -3,6 +3,7 @@
 #include "game_tools.h"
 #include "game_enum.h"
 #include "game_assets.h"
+#include "game_types.h"
 
 #define MAX_OPTIONS 512
 #define MAX_CELLS   256 
@@ -12,7 +13,6 @@
 typedef struct map_grid_s map_grid_t;
 typedef struct choice_pool_s choice_pool_t;
 
-typedef struct ent_s ent_t;
 typedef struct level_s level_t;
 typedef uint64_t run_seed;
 extern run_seed RUN_SEED;

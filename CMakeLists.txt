@@ -57,17 +57,18 @@ else()
     )
   endif()
 # Web Configurations
-#if ("${PLATFORM}" MATCHES "Web")
-#  target_link_libraries(index PRIVATE raylib)
-#  set_target_properties(index PROPERTIES
-#    LINK_FLAGS "--preload-file resources -O0 -gsource-map -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH=1 -sUSE_GLFW=3 -sASYNCIFY -sUSE_WEBGL2=1 -sFETCH -sFORCE_FILESYSTEM=1 -sINITIAL_MEMORY=256MB -sTOTAL_STACK=2MB -sWASM=1 -s SINGLE_FILE=0 -o index.html -sEXPORTED_RUNTIME_METHODS=['HEAP8','HEAPU8','HEAP16','HEAPU16','HEAP32','HEAPU32','HEAPF32','HEAPF64','ccall','cwrap']"  )
-#  add_custom_command(
-#    TARGET ${PROJECT_NAME} PRE_BUILD
-#    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/../resources
-#  )
+if ("${PLATFORM}" MATCHES "Web")
+   set(CMAKE_EXECUTABLE_SUFFIX ".html")
+  target_link_libraries(index PRIVATE raylib)
+  set_target_properties(index PROPERTIES
+    LINK_FLAGS "--preload-file resources -O0 -gsource-map -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH=1 -sUSE_GLFW=3 -sASYNCIFY -sUSE_WEBGL2=1 -sFETCH -sFORCE_FILESYSTEM=1 -sINITIAL_MEMORY=256MB -sTOTAL_STACK=2MB -sWASM=1 -s SINGLE_FILE=0 -o index.html -sEXPORTED_RUNTIME_METHODS=['HEAP8','HEAPU8','HEAP16','HEAPU16','HEAP32','HEAPU32','HEAPF32','HEAPF64','ccall','cwrap']"  )
+  add_custom_command(
+    TARGET ${PROJECT_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/../resources
+  )
   #DEPENDS ${PROJECT_NAME}
 
-  #endif()
+  endif()
   target_link_options(index PRIVATE -pg)
 if(APPLE)
   target_link_libraries(${PROJECT_NAME} m dl pthread GL X11 Xrandr Xinerama Xcursor Xi)

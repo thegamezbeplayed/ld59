@@ -7,7 +7,7 @@ typedef BehaviorStatus (*ActionKeyCallback)(struct ent_s* e, action_key_t a, Key
 struct action_key_s{
   ActionType        action;
   int               num_keys;
-  KeyboardKey       keys[8];
+  KeyboardKey       keys[12];
   ActionKeyCallback fn;
   int               binding;
 };

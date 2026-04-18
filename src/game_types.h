@@ -38,7 +38,7 @@ struct ent_s{
   Cell                  pos, old_pos, facing;
   EntityState           state;
   controller_t          *control;
-  sprite_t              *sprite;
+  sprite_t              *sprite, *base;
   Signals               signals;
 };
 
@@ -48,14 +48,14 @@ ent_t* InitEntStatic(EntityType t, Tiles r);
 void EntToggleTooltip(ent_t* e);
 
 void EntSync(ent_t* e);
-bool EntKill(ent_t* e);
-void EntDestroy(ent_t* e);
-bool FreeEnt(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
 void EntPrepStep(ent_t *e);
 static void EntSetPos(ent_t *e, Cell pos){
   e->pos = pos;
 }
+
+bool FreeEnt(ent_t*);
+void EntRender(ent_t* e);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
 bool CheckEntAvailable(ent_t* e);

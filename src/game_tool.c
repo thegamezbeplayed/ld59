@@ -8,12 +8,12 @@ void HashInit(hash_map_t* m, uint32_t cap) {
 }
 
 void HashClear(hash_map_t* m){
-  free(m->slots);
+  GameFree("HashClear", m->slots);
   m->count = 0;
 }
 
 void HashFree(hash_map_t* m) {
-    free(m->slots);
+    GameFree("HashFree", m->slots);
     memset(m, 0, sizeof(*m));
 }
 

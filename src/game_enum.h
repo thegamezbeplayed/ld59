@@ -14,7 +14,12 @@ typedef enum{
   EVENT_FINISH,
   EVENT_ENT_ACTION,
   EVENT_LEVEL_TURN_END,
+  EVENT_LEVEL_SHIFT,
+  EVENT_LEVEL_CHECK,
+  EVENT_LEVEL_SOLVED,
+  EVENT_LEVEL_END,
   EVENT_TILE_COLLISION,
+  EVENT_SHIFT_SLAB,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -133,7 +138,8 @@ typedef enum{
 }Tiles;
 
 typedef enum{
-  LVL_ONE,
+  LVL_TUT,
+  LVL_BASIC,
   LVL_ALL,
 }Levels;
 
@@ -161,5 +167,11 @@ typedef enum{
   EVS_KILL
 }EventStatus;
 
+
+typedef enum{
+  SOLV_NO,
+  SOLV_TRUE,
+  SOLV_END,
+}SolveStatus;
 #endif
 

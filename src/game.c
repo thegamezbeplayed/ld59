@@ -11,7 +11,7 @@ Camera2D camera = { 0 };
 void InitGameplayScreen(void){
 //  MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
   //camera.target = player.position;
-  InitCamera(2.0f,5.0f,Vector2Scale(VECTOR2_CENTER_SCREEN,0.5f),VECTOR2_CENTER_SCREEN);
+  InitCamera(2.0f,0.0f,Vector2Scale(VECTOR2_CENTER_SCREEN,0.5f),VECTOR2_CENTER_SCREEN);
 
   InitGameEvents();
 }
@@ -49,6 +49,8 @@ void DrawGameplayScreen(void)
 
   ScreenRender();
   ScreenCameraToggle();
+  DrawTextEx(ui.font,GetLevelString(),Vector2XY(VECTOR2_CENTER_SCREEN.x, 32) ,28,1,BLUE);
+
   //MapGenRender();
   //UISync(FETCH_UPDATE);
   //UIRender();

@@ -74,7 +74,7 @@ bool InputCheck(int turn){
       if(akey.fn(player, akey, k) == BEHAVIOR_SUCCESS){
         LevelEvent(EVENT_ENT_ACTION, player, player->gouid);
         
-        player_input.turn++;
+        player_input.turn = WorldGetTurn();
       }
     }
   }

@@ -8,7 +8,7 @@ void InitMap(void){
   }
 }
 
-map_grid_t* InitMapGrid(void){
+map_grid_t* InitMapGrid(level_t* l){
   map_grid_t* m = GameMalloc("InitMapGrid", sizeof(map_grid_t));
 
   *m = (map_grid_t){0};
@@ -17,18 +17,28 @@ map_grid_t* InitMapGrid(void){
 
   m->x = 0;
   m->y = 0;
-  m->width = 12;
-  m->height = 12;
+  level_layout_t ld = LVLS[l->id];
+
+  m->width = ld.wid;
+  m->height = ld.hei;
   m->floor = DARKBROWN;
 
   m->tiles = GameMalloc("InitMapGrid", m->width * sizeof(map_cell_t*));
   for(int x = 0; x < m->width; x++){
     m->tiles[x] = GameCalloc("InitMapGrid", m->height, sizeof(map_cell_t)); 
     for(int y = 0; y < m->height; y++){
+      Tiles t = ld.tiles[x][y];
+
       Cell pos = CELL_NEW(x,y);
-      map_cell_t* mc = InitMapCell(m, test.tiles[x][y], pos);
+      map_cell_t* mc = InitMapCell(m, t, pos);
 
       mc->gouid = RegisterMapCell(mc);
+      
+      if(t == TILE_BLANK)
+        continue;
+
+      Signals sig = TILE_SIGNALS[t];
+      PuzzleRegisterSolution(l->puzzle, mc, sig);
     }
   }
   
@@ -44,7 +54,6 @@ map_cell_t* InitMapCell(map_grid_t* m, Tiles t, Cell pos){
   mc->sprite = InitSpriteByID(t, SHEET_TILE);
   mc->sprite->pos = CellToVector2(pos, CELL_WIDTH);
 
-  mc->sprite->slice->scale = 0.5f;  
   return mc;
 }
 
@@ -117,6 +126,7 @@ TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){
   mc->occupant =e;
   mc->status = TILE_OCCUPIED;
 
+  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
   return TILE_SUCCESS;
 }
 

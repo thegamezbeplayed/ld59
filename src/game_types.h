@@ -7,6 +7,7 @@
 #include "raylib.h"
 #include "game_math.h"
 #include "game_tools.h"
+#include "game_systems.h"
 
 #define GRID_SIZE 128
 #define GRID_STEP 32
@@ -38,6 +39,7 @@ struct ent_s{
   EntityState           state;
   controller_t          *control;
   sprite_t              *sprite;
+  Signals               signals;
 };
 
 ent_t* InitEnt(EntityType id);
@@ -51,7 +53,9 @@ void EntDestroy(ent_t* e);
 bool FreeEnt(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
 void EntPrepStep(ent_t *e);
-void EntSetPos(ent_t *e, Vector2 pos);
+static void EntSetPos(ent_t *e, Cell pos){
+  e->pos = pos;
+}
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
 bool CheckEntAvailable(ent_t* e);
@@ -62,6 +66,6 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s);
 bool CanChangeState(EntityState old, EntityState s);
 
 TileStatus EntGridStep(ent_t *e, Cell step);
-
-void OnStaticCollide(EventType event, void* data, void* user);
+void OnShiftEvent(event_t* e, void* user);
+void OnStaticCollide( event_t* e, void* user);
 #endif

@@ -95,11 +95,25 @@ void GameProcessEnd();
 void GameProcessAddEvent(ProcessType, cooldown_t*);
 //===WORLD_T===>
 typedef struct{
-  int         turn;
-  Cell        start_pos;
-  event_bus_t *events;
-  map_grid_t*   map;
-}level_t;
+  map_cell_t*   slot;
+  Signals       solution;
+  SolveStatus   status;
+}solution_t;
+
+typedef struct{
+  int         cap, count, solved;
+  solution_t  *entries;
+  SolveStatus completion;
+}stage_puzzle_t;
+
+struct level_s{
+  Levels          id;
+  int             turn;
+  Cell            start_pos;
+  event_bus_t     *events;
+  stage_puzzle_t* puzzle;
+  map_grid_t*     map;
+};
 level_t* InitLevel(Levels id);
 void LevelReady(level_t* l);
 void LevelEventOnce(EventType type, void* data, uint64_t uid);
@@ -107,6 +121,8 @@ void LevelEvent(EventType type, void* data, uint64_t uid);
 void LevelTargetSubscribe(EventType, EventCallback, void*, uint64_t);
 void LevelSubscribe(EventType event, EventCallback cb, void* data);
 void LevelStartCooldown(cooldown_t* cd);
+bool PuzzleRegisterSolution(stage_puzzle_t*, map_cell_t*, Signals);
+
 typedef struct{
   unsigned int    num_ents;
 }world_data_t;
@@ -116,13 +132,14 @@ typedef struct world_s{
   unsigned int  num_ent;
   sprite_t*     sprs[MAX_ENTS];
   unsigned int  num_spr;
+  hash_map_t    ent_map, tile_map;
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
   level_t       *levels[LVL_ALL];
   Levels        stage;
 } world_t;
 extern world_t world;
-
+void OnWorldEvent(event_t *e, void* user);
 ent_t* WorldPlayer(void);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 bool RegisterBehaviorTree(BehaviorData data);
@@ -143,6 +160,8 @@ static int WorldGetTime(){
 static level_t* WorldGetLevel(void){
   return world.levels[world.stage];
 }
+
+const char* GetLevelString(void);
 static map_grid_t* WorldGetMap(void){
 
   level_t* l = WorldGetLevel();
@@ -162,6 +181,10 @@ static int WorldGetTurn(){
 static void CooldownEmit(void* params){
   cooldown_t* cd = params;
   LevelEvent(cd->type, cd, cd->uid);
+}
+
+static map_cell_t* WorldGetTile(hash_key_t key){
+  return HashGet(&world.tile_map, key);
 }
 
 #endif

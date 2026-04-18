@@ -3,6 +3,7 @@
 #include "game_math.h"
 #include "game_process.h"
 #include "game_helpers.h"
+#include "game_control.h"
 
 MAKE_ADAPTER(StepState, ent_t*);
 
@@ -13,6 +14,7 @@ ent_t* InitEnt(EntityType t){
   if(def.id != t)
     return NULL;
 
+  e->type = t;
   e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
   e->control = InitController();
   SetState(e,STATE_SPAWN,NULL);
@@ -22,10 +24,11 @@ ent_t* InitEnt(EntityType t){
 ent_t* InitEntStatic(EntityType t, Tiles r){
   ent_t* e = GameCalloc("InitEnt", 1, sizeof(ent_t));
 
+  e->type = t;
   e->sprite = InitSpriteByID(r, SHEET_TILE);
-  e->sprite->slice->scale /= 2.4;
   e->sprite->owner = e;
   e->control = InitController();
+  e->signals = TILE_SIGNALS[r];
   SetState(e,STATE_SPAWN,NULL);
 
   return e;
@@ -114,6 +117,7 @@ bool CheckEntAvailable(ent_t* e){
 TileStatus EntGridStep(ent_t *e, Cell step){
   Cell newPos = CellInc(e->pos,step);
 
+  e->facing = step;
   TileStatus status = MapSetOccupant(WorldGetMap(),e,newPos);
 
   if(status < TILE_ISSUES){
@@ -122,19 +126,35 @@ TileStatus EntGridStep(ent_t *e, Cell step){
     //WorldDebugCell(e->pos, YELLOW);
     e->pos = newPos;
     e->old_pos = oldPos;
-    e->facing = step;
   }
   
   return status;
 }
 
 
-void OnStaticCollide(EventType event, void* data, void* user){
+void OnShiftEvent(event_t* e, void* user){
+  ent_t* p = user;
+  ent_t* slab = e->data;
+
+  if(p->state != STATE_PUSHING || slab->state != STATE_SHIFTING)
+    return;
+
+  SetState(slab, STATE_IDLE, NULL);
+  SetState(p, STATE_IDLE, NULL);
+  if(EntGridStep(slab, p->facing) >= TILE_ISSUES)
+    return;
+
+  if(EntGridStep( p, p->facing) < TILE_ISSUES)
+    LevelEvent(EVENT_LEVEL_SHIFT, slab, p->gouid);
+}
+
+void OnStaticCollide( event_t* e, void* user){
   ent_t* slab = user;
-  ent_t* other = data;
+  ent_t* other = e->data;
 
   if(!SetState(other, STATE_PUSHING, NULL))
     return;
 
-  SetState(slab, STATE_SHIFTING, NULL);
+  if(SetState(slab, STATE_SHIFTING, NULL))
+  LevelEvent(EVENT_SHIFT_SLAB, slab, other->gouid);
 }

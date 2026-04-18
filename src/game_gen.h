@@ -5,7 +5,7 @@
 #include "game_assets.h"
 
 #define MAX_OPTIONS 512
-
+#define MAX_CELLS   256 
 #define GRID_WIDTH 128
 #define GRID_HEIGHT 128
   
@@ -13,6 +13,7 @@ typedef struct map_grid_s map_grid_t;
 typedef struct choice_pool_s choice_pool_t;
 
 typedef struct ent_s ent_t;
+typedef struct level_s level_t;
 typedef uint64_t run_seed;
 extern run_seed RUN_SEED;
 //#include "game_utils.h"
@@ -78,7 +79,7 @@ void MapRender(map_grid_t* m);
 static Rectangle MapBounds(map_grid_t* m){
   return (Rectangle){m->x, m->y, m->width, m->height};
 }
-map_grid_t* InitMapGrid(void);
+map_grid_t* InitMapGrid(level_t*);
 void MapTurnStep(map_grid_t* m);
 TileStatus MapChangeOccupant(map_grid_t* m, ent_t* e, Cell old, Cell c);
 TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c);

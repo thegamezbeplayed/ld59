@@ -37,7 +37,6 @@ sprite_t* InitSpriteByID(int id, SheetID s){
     spr->sheet = data->sprite_sheet;
 
     spr->offset = spr->slice->offset;
-    //spr->slice->scale = SPRITE_SCALE;
   }
 
   return spr;
@@ -206,7 +205,7 @@ void SpriteLoadSubTextures(sub_texture_t* data, SheetID id, int sheet_cap){
     sprite_slice_t *spr = GameMalloc("SpriteLoadSubTextures",sizeof(sprite_slice_t));
     memset(spr,0,sizeof(sprite_slice_t));
 
-    spr->scale = 1;//ScreenSized(SIZE_SCALE);
+    spr->scale = sprData.scale == 0? 1: sprData.scale;
     spr->id = sprData.tag;
     spr->center = center;// Vector2Scale(offset,spr->scale);
     spr->offset = VECTOR2_ZERO;//offset;//center;//Vector2Scale(center,spr->scale);

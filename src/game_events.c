@@ -357,7 +357,7 @@ void EventEmit(event_bus_t* bus, event_t* e){
        && bus->subs[i].uid != e->iuid)
       continue;
 
-    bus->subs[i].cb(e->type, e->data, bus->subs[i].user_data);
+    bus->subs[i].cb(e, bus->subs[i].user_data);
     e->calls++;
   }
 

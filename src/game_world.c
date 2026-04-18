@@ -13,6 +13,25 @@ TreeCacheEntry tree_cache[18] = {0};
 int tree_cache_count = 0;
 ent_t* player = NULL;
 
+void WorldReset(void* param){
+  world.num_ent = 0;
+  world.num_spr = 0;
+
+  HashClear(&world.ent_map);
+  HashClear(&world.tile_map);
+
+  HashInit(&world.ent_map, MAX_ENTS * 2);
+  HashInit(&world.tile_map, MAX_CELLS * 2);
+
+
+  GameFree("WorldReset", world.levels[world.stage]->events);
+  UnloadEvents( game_process.events);
+  world.levels[world.stage] = InitLevel(++world.stage);
+  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[world.stage]);
+  game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
+  LevelReady(WorldGetLevel());
+}
+
 bool TogglePause(ui_menu_t* m){
   if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY)
     GameSetState(GAME_PAUSE);
@@ -29,11 +48,22 @@ void GameSetState(GameState state){
   game_process.state[SCREEN_GAMEPLAY] = state;
 }
 
+void OnWorldEvent(event_t *e, void* user){
+  level_t* l = e->data;
+
+  cooldown_t* cd = InitCooldown(48, EVENT_LEVEL_END, WorldReset, l);
+
+  GameProcessAddEvent(PROCESS_LEVEL, cd);
+
+  l->events->count = 0;
+
+}
 void GameReady(void *context){
 
   WorldInitOnce();
   world.stage = 0;
   world.levels[0] = InitLevel(0);
+  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[0]);
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
   LevelReady(WorldGetLevel());
 }
@@ -147,7 +177,10 @@ game_object_uid_i RegisterEnt( ent_t *e, Cell pos){
   if(e->sprite)
     RegisterSprite(e->sprite);
 
-  return GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
+  game_object_uid_i gouid = GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
+
+  HashPut(&world.ent_map, gouid, e);
+  return gouid;
 }
 
 bool RegisterSprite(sprite_t *s){
@@ -159,7 +192,10 @@ bool RegisterSprite(sprite_t *s){
 
 game_object_uid_i RegisterMapCell(map_cell_t* mc){
   mc->sprite->is_visible = true;
-  return GameObjectMakeUID("MAP_CELL", IntGridIndex(mc->coords.x, mc->coords.y), WorldGetTime());
+  game_object_uid_i gouid =  GameObjectMakeUID("MAP_CELL", IntGridIndex(mc->coords.x, mc->coords.y), WorldGetTime());
+
+  HashPut(&world.tile_map, gouid, mc);
+  return gouid;
 }
 
 void WorldInitOnce(){
@@ -287,6 +323,8 @@ void InitGameEvents(){
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
   game_process.game_frames = 0; 
+  HashInit(&world.ent_map, MAX_ENTS *2);
+  HashInit(&world.tile_map, MAX_CELLS *2);
 }
 
 bool GameTransitionScreen(){
@@ -349,4 +387,9 @@ ent_t* WorldPlayer(void){
   return player;
 }
 
-
+const char* GetLevelString(void){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return "";
+  return TextFormat("Level: %i", l->id);
+}

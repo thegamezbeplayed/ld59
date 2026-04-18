@@ -15,6 +15,7 @@ typedef struct sub_texture_s {
     int originX, originY;
     int positionX, positionY;
     int sourceWidth, sourceHeight;
+    float scale;
     int padding;
     bool trimmed;
     int trimRecX, trimRecY, trimRecWidth, trimRecHeight;

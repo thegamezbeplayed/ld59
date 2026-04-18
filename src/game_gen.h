@@ -2,6 +2,7 @@
 #define __GAME_GEN__ 
 #include "game_tools.h"
 #include "game_enum.h"
+#include "game_assets.h"
 
 #define MAX_OPTIONS 512
 
@@ -56,6 +57,7 @@ struct map_cell_s{
   game_object_uid_i   gouid;
   int                 index;
   Tiles               tile;
+  sprite_t*           sprite;
   Cell                coords;
   TileStatus          status;
   TileFlags           flags;
@@ -71,6 +73,7 @@ struct map_grid_s{
   int          step_size;
   Color        floor;
 };
+void MapRender(map_grid_t* m);
 
 static Rectangle MapBounds(map_grid_t* m){
   return (Rectangle){m->x, m->y, m->width, m->height};

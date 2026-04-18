@@ -14,6 +14,7 @@ typedef enum{
   EVENT_FINISH,
   EVENT_ENT_ACTION,
   EVENT_LEVEL_TURN_END,
+  EVENT_TILE_COLLISION,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -24,6 +25,17 @@ typedef enum{
   ENT_TILE,
   ENT_DONE
 }EntityType;
+
+typedef enum{
+  STATE_NONE,//if ent_t is properly initalized to {0} this is already set
+  STATE_SPAWN,//Should only be set after NONE
+  STATE_IDLE, //should be able to move freely between these ==>
+  STATE_PUSHING,
+  STATE_PLACED,
+  STATE_SHIFTING,
+  STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
+  STATE_END//sentinel entity state should never be this or greater
+}EntityState;
 
 typedef enum{
   BEHAVIOR_NONE,
@@ -76,7 +88,47 @@ typedef enum{
 }CharacterSprite;
 
 typedef enum{
-  TILE_BLANK,
+  TILE_BLANK,    
+
+  SLAB_ALGIZ,    
+  SLAB_ANSUZ,    
+  SLAB_BERKANA,  
+  SLAB_DAGAZ,    
+  SLAB_EHWAZ,    
+  SLAB_FEHU,     
+  SLAB_GEBO,     
+  SLAB_HAGALAZ,  
+
+  SLAB_INGUZ,    
+  SLAB_INGWAZ,   
+  SLAB_ISA,      
+  SLAB_JERA,     
+  SLAB_KUANAZ,   
+  SLAB_LAGUZ,    
+  SLAB_MANNAZ,   
+  SLAB_NAUTHIZ,  
+  SLAB_OTHILA,   
+  SLAB_PEORTH,   
+
+  SLAB_RAIDO,    
+  SLAB_SOL,      
+  SLAB_TEIWAZ,   
+  SLAB_THURISAZ, 
+  SLAB_URUZ,     
+  SLAB_WUNJO,    
+  SLAB_YR,       
+  TILE_ANSUZ,    
+
+  TILE_FEHU,     
+  TILE_GEBO,     
+  TILE_LAGUZ,    
+  TILE_MANNAZ,   
+  TILE_RAIDO,    
+  TILE_SOL,      
+  TILE_THURISAZ, 
+  TILE_URUZ,     
+  TILE_YR,       
+
   TILE_DONE
 }Tiles;
 
@@ -108,6 +160,6 @@ typedef enum{
   EVS_NONE,
   EVS_KILL
 }EventStatus;
-  
+
 #endif
 

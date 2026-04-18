@@ -7,8 +7,8 @@
 #include "game_lists.h"
 
 
-#define CELL_WIDTH 16
-#define CELL_HEIGHT 16
+#define CELL_WIDTH 27
+#define CELL_HEIGHT 30
 
 static inline bool LESS_THAN(int a, int b){
   return a<b;
@@ -104,15 +104,6 @@ void StatMaxOut(stat_t* s);
 void StatEmpty(stat_t* s);
 float StatGetRatio(stat_t *self);
 //<====STATS
-
-typedef enum{
-  STATE_NONE,//if ent_t is properly initalized to {0} this is already set
-  STATE_SPAWN,//Should only be set after NONE
-  STATE_IDLE, //should be able to move freely between these ==>
-  STATE_PLACED,
-  STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
-  STATE_END//sentinel entity state should never be this or greater
-}EntityState;
 
 typedef bool (*StateComparator)(int a, int b);
 

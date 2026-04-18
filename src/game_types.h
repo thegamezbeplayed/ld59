@@ -34,13 +34,14 @@ struct ent_s{
   int                   uid;
   game_object_uid_i     gouid;
   EntityType            type;
-  Cell                  pos;
+  Cell                  pos, old_pos, facing;
   EntityState           state;
   controller_t          *control;
   sprite_t              *sprite;
 };
 
 ent_t* InitEnt(EntityType id);
+ent_t* InitEntStatic(EntityType t, Tiles r);
 
 void EntToggleTooltip(ent_t* e);
 
@@ -61,4 +62,6 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s);
 bool CanChangeState(EntityState old, EntityState s);
 
 TileStatus EntGridStep(ent_t *e, Cell step);
+
+void OnStaticCollide(EventType event, void* data, void* user);
 #endif

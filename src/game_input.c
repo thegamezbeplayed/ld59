@@ -71,10 +71,11 @@ bool InputCheck(int turn){
         continue;
 
 
-      if(akey.fn(player, akey, k) == BEHAVIOR_SUCCESS)
+      if(akey.fn(player, akey, k) == BEHAVIOR_SUCCESS){
         LevelEvent(EVENT_ENT_ACTION, player, player->gouid);
         
         player_input.turn++;
+      }
     }
   }
 }

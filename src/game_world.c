@@ -30,6 +30,7 @@ void GameSetState(GameState state){
 }
 
 void GameReady(void *context){
+
   WorldInitOnce();
   world.stage = 0;
   world.levels[0] = InitLevel(0);
@@ -139,13 +140,14 @@ int AddSprite(sprite_t *s){
   return -1;
 }
 
-bool RegisterEnt( ent_t *e, Cell pos){
+game_object_uid_i RegisterEnt( ent_t *e, Cell pos){
   e->uid = AddEnt(e);
 
+  e->pos = pos;
   if(e->sprite)
     RegisterSprite(e->sprite);
 
-  return e->uid > -1;
+  return GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
 }
 
 bool RegisterSprite(sprite_t *s){
@@ -156,6 +158,7 @@ bool RegisterSprite(sprite_t *s){
 }
 
 game_object_uid_i RegisterMapCell(map_cell_t* mc){
+  mc->sprite->is_visible = true;
   return GameObjectMakeUID("MAP_CELL", IntGridIndex(mc->coords.x, mc->coords.y), WorldGetTime());
 }
 
@@ -223,11 +226,12 @@ void FreeWorld(){
 }
 
 void WorldRender(){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return;
+  MapRender(l->map);
   for(int i = 0; i < world.num_spr;i++)
-    if(world.sprs[i]->owner !=NULL)
       DrawSprite(world.sprs[i]);
-    else
-      i-=RemoveSprite(i);
 }
 
 void InitGameProcess(){

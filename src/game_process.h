@@ -98,6 +98,7 @@ typedef struct{
   int         turn;
   Cell        start_pos;
   event_bus_t *events;
+  map_grid_t*   map;
 }level_t;
 level_t* InitLevel(Levels id);
 void LevelReady(level_t* l);
@@ -125,7 +126,7 @@ extern world_t world;
 ent_t* WorldPlayer(void);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 bool RegisterBehaviorTree(BehaviorData data);
-bool RegisterEnt( ent_t *e, Cell pos);
+game_object_uid_i RegisterEnt( ent_t *e, Cell pos);
 game_object_uid_i RegisterMapCell(map_cell_t*);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();
@@ -142,7 +143,15 @@ static int WorldGetTime(){
 static level_t* WorldGetLevel(void){
   return world.levels[world.stage];
 }
+static map_grid_t* WorldGetMap(void){
 
+  level_t* l = WorldGetLevel();
+
+  if(l)
+    return l->map;
+
+  return NULL;
+}
 static int WorldGetTurn(){
   if(world.levels[world.stage])
     return world.levels[world.stage]->turn;

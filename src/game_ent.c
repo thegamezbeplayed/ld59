@@ -7,8 +7,7 @@
 MAKE_ADAPTER(StepState, ent_t*);
 
 ent_t* InitEnt(EntityType t){
-  ent_t* e = malloc(sizeof(ent_t));
-  *e = (ent_t){0};  // zero initialize if needed
+  ent_t* e = GameCalloc("InitEnt", 1, sizeof(ent_t));
 
   ent_d def = DEF_ENT[t];
   if(def.id != t)
@@ -17,6 +16,18 @@ ent_t* InitEnt(EntityType t){
   e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
   e->control = InitController();
   SetState(e,STATE_SPAWN,NULL);
+  return e;
+}
+
+ent_t* InitEntStatic(EntityType t, Tiles r){
+  ent_t* e = GameCalloc("InitEnt", 1, sizeof(ent_t));
+
+  e->sprite = InitSpriteByID(r, SHEET_TILE);
+  e->sprite->slice->scale /= 2.4;
+  e->sprite->owner = e;
+  e->control = InitController();
+  SetState(e,STATE_SPAWN,NULL);
+
   return e;
 }
 
@@ -103,9 +114,7 @@ bool CheckEntAvailable(ent_t* e){
 TileStatus EntGridStep(ent_t *e, Cell step){
   Cell newPos = CellInc(e->pos,step);
 
-  e->pos = newPos;
-  /*
-  TileStatus status = MapSetOccupant(e->map,e,newPos);
+  TileStatus status = MapSetOccupant(WorldGetMap(),e,newPos);
 
   if(status < TILE_ISSUES){
     //map_cell_t* mc = &e->map->tiles[newPos.x][newPos.y];
@@ -113,11 +122,19 @@ TileStatus EntGridStep(ent_t *e, Cell step){
     //WorldDebugCell(e->pos, YELLOW);
     e->pos = newPos;
     e->old_pos = oldPos;
-    e->facing = CellInc(e->pos,step);
+    e->facing = step;
   }
-  else
-    e->facing = newPos;
-*/
-  return TILE_SUCCESS;
+  
+  return status;
 }
 
+
+void OnStaticCollide(EventType event, void* data, void* user){
+  ent_t* slab = user;
+  ent_t* other = data;
+
+  if(!SetState(other, STATE_PUSHING, NULL))
+    return;
+
+  SetState(slab, STATE_SHIFTING, NULL);
+}

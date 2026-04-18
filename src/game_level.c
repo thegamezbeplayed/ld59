@@ -34,6 +34,26 @@ level_t* InitLevel(Levels id){
 }
 
 void LevelReady(level_t* l){
+  l->map = InitMapGrid();
+
+  for(int x = 0; x < l->map->width; x++){
+    for(int y = 0; y < l->map->height; y++){
+      if(test.slabs[x][y] == TILE_EMPTY)
+        continue;
+      Cell pos = CELL_NEW(x,y);
+      ent_t* e = InitEntStatic(ENT_TILE, test.slabs[x][y]);
+      if(!e)
+        continue;
+
+      e->gouid = RegisterEnt(e, pos);
+
+      if(MapSetOccupant(l->map, e, pos) > TILE_ISSUES)
+        continue;
+
+      LevelTargetSubscribe(EVENT_TILE_COLLISION, OnStaticCollide, e, e->gouid);
+
+    }
+  }
   l->turn++;
 
   LevelTargetSubscribe(EVENT_ENT_ACTION, OnPlayerAction, l, player->gouid);

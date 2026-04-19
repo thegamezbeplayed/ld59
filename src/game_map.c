@@ -151,11 +151,17 @@ Cell bounds = CELL_NEW(m->width,m->height);
 }
 
 TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){
+  if(!e)
+    return TILE_ERROR;
+
   Cell bounds = CELL_NEW(m->width,m->height);
   if(!cell_in_bounds(c,bounds))
     return TILE_OUT_OF_BOUNDS;
 
   map_cell_t* mc = &m->tiles[c.x][c.y];
+
+  if(!mc)
+    return TILE_OUT_OF_BOUNDS;
 
   if(mc->status == TILE_NO_ENTRY && e->type == ENT_TILE){
     LevelEvent(EVENT_TILE_INSERT, e, mc->gouid);
@@ -166,7 +172,7 @@ TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){
       LevelEvent(EVENT_TILE_COLLISION, e, mc->occupant->gouid);
     return TILE_OCCUPIED;
   }
- 
+  
   MapRemoveOccupant(m,e->pos);
   mc->occupant =e;
   mc->status = TILE_OCCUPIED;

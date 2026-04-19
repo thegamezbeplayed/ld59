@@ -1,5 +1,30 @@
 #include "game_process.h"
 
+payload_t* InitPayload(int count, param_t params[count]){
+  payload_t* p = GameCalloc("InitPayload", 1, sizeof(payload_t));
+
+  p->params =  GameCalloc("InitPayload", 2, sizeof(param_t));
+
+  for(int i = 0; i < count; i++){
+    param_t* e = &p->params[p->count++];
+
+    *e = params[i];
+  }
+
+  return p;
+}
+
+payload_t* InitPayloadSingle(param_t param){
+  payload_t* p = GameCalloc("InitPayloadSingle", 1, sizeof(payload_t));
+
+  p->params = GameCalloc("InitPayload", 1, sizeof(payload_t));
+
+  param_t* e = &p->params[p->count++];
+  *e = param;
+
+  return p;
+}
+
 static interaction_t interactions[MAX_INTERACTIONS];
 static bool interaction_used[MAX_INTERACTIONS]; 
 
@@ -282,6 +307,7 @@ event_bus_t* InitEventBus(int cap){
       .subs = GameCalloc("InitEventBus", cap, sizeof(event_sub_t))
   };
 
+  HashInit(&bus->scheduled, next_pow2_int(cap*2));
   return bus;
 }
 
@@ -292,6 +318,34 @@ void EventBusEnsureCap(event_bus_t* bus){
   int new_cap = bus->cap + 64;
   bus->subs = GameRealloc("EventBusEnsureCap", bus->subs, new_cap * sizeof(event_sub_t));
   bus->cap = new_cap;
+}
+
+void EventBusStep(event_bus_t* bus){
+  hash_iter_t iter;
+  HashStart(&bus->scheduled, &iter);
+
+  hash_slot_t* s;
+
+  while((s = HashNext(&iter))){
+    event_t* e = s->value;
+
+    switch(e->timing){
+      case TF_TURN:
+        if(e->scheduled > WorldGetTurn())
+          continue;
+        break;
+      case TF_UPDATE:
+        if(e->scheduled > WorldGetTime())
+          continue;
+        break;
+      default:
+        break;
+
+    }
+
+    EventEmit(bus, e);
+    HashRemove(&bus->scheduled, e->gouid);
+  }
 }
 
 event_sub_t* EventSubscribe(event_bus_t* bus, EventType event, EventCallback cb, void* u_data){
@@ -365,3 +419,12 @@ void EventEmit(event_bus_t* bus, event_t* e){
     EventRemove(bus, e->iuid);
 }
 
+game_object_uid_i EventSchedule(event_bus_t* bus, event_t* e){
+  game_object_uid_i gouid = hash_combine_64(hash_string_64("EVENT"),
+      hash_combine_64(e->iuid, WorldGetTime()));
+
+  e->gouid = gouid;
+
+  HashPut(&bus->scheduled, gouid, e);
+  return gouid;
+}

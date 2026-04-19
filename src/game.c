@@ -23,7 +23,7 @@ void PreUpdate(void){
 }
 
 void FixedUpdate(void){
-  AudioStep();
+//  AudioStep();
   WorldFixedUpdate();
 }
 

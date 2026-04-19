@@ -31,7 +31,7 @@ void RegisterSignals(void){
       if(sig.signal == SIG_NONE)
         break;
 
-      RegisterSignal(&sig);
+      RegisterSignal(&DEF_SIGINT[i]);
     }
 }
 

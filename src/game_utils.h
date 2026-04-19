@@ -40,6 +40,13 @@ typedef struct{
   void*             data;
   size_t            size;
 }param_t;
+
+typedef struct{
+  int     count;
+  param_t *params;
+}payload_t;
+payload_t* InitPayload(int count, param_t[count]);
+payload_t* InitPayloadSingle(param_t);
 static param_t EMPTY_PARAM = {0,DATA_NONE};
 static param_t ParamCopyObj(DataType type, game_object_uid_i uid, const void* src, size_t size){
   param_t o;
@@ -218,6 +225,38 @@ static bool ParamCompare(param_t *a, param_t *b, ParamCompareFn fn){
 
 }
 
+//====EVENTS===>
+typedef void (*CooldownCallback)(payload_t* );
+
+
+typedef struct{
+  uint64_t          uid;
+  EventType         type;
+  int               duration;
+  int               elapsed;
+  bool              is_complete;
+  bool              is_recycled;
+  void*             on_end_params;
+  void*             on_step_params;
+  CooldownCallback  on_end;
+  CooldownCallback  on_step;
+}cooldown_t;
+cooldown_t* InitCooldown(int dur, EventType type, CooldownCallback on_end_callback, void* params);
+void UnloadCooldown(cooldown_t* cd);
+
+typedef struct{
+  cooldown_t  cooldowns[MAX_EVENTS];
+  bool        cooldown_used[MAX_EVENTS];
+}events_t;
+
+events_t* InitEvents();
+void UnloadEvents(events_t* ev);
+int AddEvent(events_t* pool, cooldown_t* cd);
+void StepEvents(events_t* pool);
+void StartEvent(events_t* pool, EventType type);
+void ResetEvent(events_t* pool, EventType type);
+bool CheckEvent(events_t* pool, EventType type);
+
 //<===BEHAVIOR TREES
 
 //forward declare
@@ -329,17 +368,18 @@ static signal_condition_t SIGCON[COND_ALL] = {
 
 typedef bool (*SignalAction)(param_t user, param_t other);
 typedef struct{
-  Signal              signal;
-  Signals             interacts;
-  Condition           condition;
-  SignalAction        action;
+  Signal        signal;
+  Signals       interacts;
+  Condition     condition;
+  SignalAction  action;
+  int           wait;
 }signal_interaction_d;
 
 void InitSignals(game_object_uid_i, Signals);
 bool ActionGlide(param_t user, param_t other);
 
 static signal_interaction_d DEF_SIGINT[TILE_DONE] = {
-  {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide},
+  {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide,6},
 };
 
 typedef struct{

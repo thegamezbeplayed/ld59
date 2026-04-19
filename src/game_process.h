@@ -118,11 +118,13 @@ level_t* InitLevel(Levels id);
 void LevelReady(level_t* l);
 void LevelEventOnce(EventType type, void* data, uint64_t uid);
 void LevelEvent(EventType type, void* data, uint64_t uid);
+void LevelScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame, int);
 void LevelTargetSubscribe(EventType, EventCallback, void*, uint64_t);
 void LevelSubscribe(EventType event, EventCallback cb, void* data);
 void LevelStartCooldown(cooldown_t* cd);
 bool PuzzleRegisterSolution(stage_puzzle_t*, map_cell_t*, Signals);
 
+void LevelFixedUpdate(void);
 typedef struct{
   unsigned int    num_ents;
 }world_data_t;
@@ -139,6 +141,7 @@ typedef struct world_s{
 extern world_t world;
 void OnWorldEvent(event_t *e, void* user);
 ent_t* WorldPlayer(void);
+param_t WorldGetParam(DataType type, hash_key_t key);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 bool RegisterBehaviorTree(BehaviorData data);
 game_object_uid_i RegisterEnt( ent_t *e, Cell pos);
@@ -175,14 +178,16 @@ static int WorldGetTurn(){
   return 0;
 }
 
-static void CooldownEmit(void* params){
-  cooldown_t* cd = params;
+static void CooldownEmit(payload_t* pl){
+  cooldown_t *cd = NULL;
+  for(int i = 0; i < pl->count; i++){
+    param_t p = pl->params[i];
+    cd = p.data;
+  }
   LevelEvent(cd->type, cd, cd->uid);
 }
 
-static map_cell_t* WorldGetTile(hash_key_t key){
-  return HashGet(&world.tile_map, key);
-}
-
+map_cell_t* WorldGetTile(hash_key_t key);
+ent_t* WorldGetEnt(hash_key_t key);
 #endif
 

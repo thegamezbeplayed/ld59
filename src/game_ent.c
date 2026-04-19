@@ -143,13 +143,15 @@ TileStatus EntGridStep(ent_t *e, Cell step){
 
   if(status < TILE_ISSUES){
     Cell oldPos = e->pos;
-    
+
+
     //SpriteAnimateTo(e->base, oldPos, newPos);
     //WorldDebugCell(e->pos, YELLOW);
     e->pos = newPos;
     e->old_pos = oldPos;
+    LevelEvent(EVENT_ENTER_CELL, e, e->gouid);
   }
-  
+
   return status;
 }
 
@@ -179,4 +181,16 @@ void OnStaticCollide( event_t* e, void* user){
 
   if(SetState(slab, STATE_SHIFTING, NULL))
   LevelEvent(EVENT_SHIFT_SLAB, slab, other->gouid);
+}
+
+void EntSignalAction(event_t* ev, void* user){
+  ent_t* e = user;
+
+  if(!e->action)
+    return;
+  e->action(ParamMakeObj(DATA_ENT, e->gouid, e), e->action_param);
+
+  e->action = NULL;
+  e->action_param = EMPTY_PARAM;
+
 }

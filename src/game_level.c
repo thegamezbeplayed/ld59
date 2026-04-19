@@ -67,6 +67,7 @@ void OnLevelEvent(event_t *e, void* user){
   switch(e->type){
     case EVENT_LEVEL_TURN_END:
       l->turn++;
+
       break;
     case EVENT_LEVEL_SHIFT:
       LevelEvent(EVENT_ENT_ACTION, player, player->gouid);
@@ -85,7 +86,6 @@ void OnLevelEvent(event_t *e, void* user){
       PuzzleUpdateSolution(l->puzzle, mc, status);
       break;
     case EVENT_LEVEL_SOLVED:
-      TraceLog(LOG_INFO, "you did it");
       LevelEvent(EVENT_LEVEL_END, l, l->id);
       break;
     case EVENT_TILE_INSERT:
@@ -113,9 +113,7 @@ void OnPlayerAction(event_t* ev, void* user){
   level_t* l = user;
   ent_t* e = ev->data;
 
-  cooldown_t* cd = InitCooldown(15, EVENT_LEVEL_TURN_END, CooldownEmit, cd);
-  cd->on_end_params = cd;
-  LevelStartCooldown(cd);
+  LevelScheduleEvent(EVENT_LEVEL_TURN_END, l, l->id, TF_UPDATE, 15);
 }
 
 stage_puzzle_t* StartPuzzle(int cap){
@@ -191,6 +189,14 @@ void LevelReady(level_t* l){
   LevelSubscribe(EVENT_TILE_INSERT, OnLevelEvent, l);
 }
 
+void LevelFixedUpdate(void){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return;
+
+  EventBusStep(l->events);
+}
+
 void LevelEventOnce(EventType type, void* data, uint64_t uid){
  event_t event = {
     .type = type,
@@ -201,6 +207,37 @@ void LevelEventOnce(EventType type, void* data, uint64_t uid){
 
   EventEmit(WorldGetLevel()->events, &event);
 
+}
+void LevelScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame tf, int step){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return;
+
+  switch(tf){
+    case TF_TURN:
+      step += WorldGetTurn();
+      break;
+    case TF_UPDATE:
+      step += WorldGetTime();
+      break;
+    default:
+      return;
+      break;
+  }
+
+  event_t* event = GameCalloc("LevelScheduleEvent",1, sizeof(event_t));
+
+  *event = (event_t){
+    .type = type,
+    .data = data,
+    .iuid = uid,
+    .max  = -1,
+    .timing = tf,
+    .scheduled = step,
+  };
+
+
+  EventSchedule(l->events, event);
 }
 
 void LevelEvent(EventType type, void* data, uint64_t uid){

@@ -35,9 +35,9 @@ int main(void)
 
   InitWindow(screenWidth,screenHeight, "raylib game template");
 
-  InitAudioDevice();      // Initialize audio device
+//  InitAudioDevice();      // Initialize audio device
 
-  InitAudio();
+  //InitAudio();
   InitResources();
   InitUI();
   

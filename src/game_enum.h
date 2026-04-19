@@ -24,6 +24,7 @@ typedef enum{
   EVENT_LEVEL_CHECK,
   EVENT_LEVEL_SOLVED,
   EVENT_LEVEL_END,
+EVENT_SIGNAL_ACTION,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -63,6 +64,12 @@ typedef enum{
   PARAM_ALL,
 }GameObjectParam;
 
+typedef enum{
+  TF_NONE,
+  TF_TURN,
+  TF_UPDATE,
+}TimeFrame;
+
 typedef enum {
   DATA_NONE,
   DATA_ARRAY,
@@ -79,6 +86,8 @@ typedef enum {
   DATA_EVENT,
   DATA_MAP_CELL,
   DATA_ELEM,
+  DATA_LEVEL,
+  DATA_CD,
   DATA_ALL,
 } DataType;
 
@@ -157,6 +166,7 @@ typedef enum{
 typedef enum{
   LVL_TUT,
   LVL_BASIC,
+  LVL_SLIP,
   LVL_VOIDS,
   LVL_ALL,
 }Levels;

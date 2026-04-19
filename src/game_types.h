@@ -37,8 +37,11 @@ struct ent_s{
   controller_t          *control;
   sprite_t              *sprite;
   Signals               signals;
+  SignalAction          action;  
+  param_t               action_param;
 };
 
+void EntSignalAction(event_t*, void*);
 ent_t* InitEnt(EntityType id);
 ent_t* InitEntStatic(EntityType t, Tiles r);
 

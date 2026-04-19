@@ -404,7 +404,7 @@ static inline bool cell_in_bounds(Cell c, Cell bounds){
   if (c.x >= bounds.x || c.x < 0)
     return false;
 
-  return (c.y <= bounds.y || c.x > 0);
+  return (c.y <= bounds.y && c.x >= 0);
 }
 
 static inline Cell cell_random_range(int min, int max){

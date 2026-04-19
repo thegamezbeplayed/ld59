@@ -16,20 +16,25 @@ typedef struct {
 
 typedef struct {
     event_sub_t* subs;
-    int count, cap;
+    hash_map_t   scheduled;
+    int          count, cap;
 } event_bus_t;
 
 struct event_s{
-  EventType   type;
-  EventStatus status;
-  int         max, calls;
-  void*       data;
-  uint64_t    iuid;
+  game_object_uid_i gouid;
+  EventType         type;
+  EventStatus       status;
+  int               max, calls;
+  void*             data;
+  uint64_t          iuid;
+  TimeFrame         timing;
+  int               scheduled;
 };
 
 event_bus_t* InitEventBus(int cap);
+void EventBusStep(event_bus_t* bus);
 event_sub_t* EventSubscribe(event_bus_t* bus, EventType event, EventCallback cb, void* u_data);
 void EventEmit(event_bus_t* bus, event_t*);
 void EventRemove(event_bus_t* bus, uint64_t id);
-
+game_object_uid_i EventSchedule(event_bus_t* bus, event_t* e);
 #endif

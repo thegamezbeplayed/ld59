@@ -4,7 +4,7 @@
 //#include "raylib.h"
 #include <stdlib.h>
 #include <string.h>
-#include "game_common.h"
+#include "game_utils.h"
 
 #define MAX_SONGS 4
 #define MAX_ANIM_FRAMES 4

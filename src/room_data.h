@@ -50,6 +50,16 @@ static level_layout_t LVLS[LVL_ALL] = {
     }
   },
   {
+    10, 10,
+    {5,4},
+    .tiles = {
+
+    },
+    .slabs = {
+      [3][2] = SLAB_ISA
+    }
+  },
+  {
     12, 10,
     {3, 1},
     .tiles = {

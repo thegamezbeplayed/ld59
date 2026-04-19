@@ -13,7 +13,7 @@ TreeCacheEntry tree_cache[18] = {0};
 int tree_cache_count = 0;
 ent_t* player = NULL;
 
-void WorldReset(void* param){
+void WorldReset(payload_t* p){
   world.num_ent = 0;
 
   HashClear(&world.ent_map);
@@ -30,6 +30,7 @@ void WorldReset(void* param){
   LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[world.stage]);
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
   LevelReady(WorldGetLevel());
+
 }
 
 bool TogglePause(ui_menu_t* m){
@@ -51,6 +52,8 @@ void GameSetState(GameState state){
 void OnWorldEvent(event_t *e, void* user){
   level_t* l = e->data;
 
+  param_t p = ParamMakeObj(DATA_LEVEL, l->id, l);
+  payload_t* pay = InitPayloadSingle(p); 
   cooldown_t* cd = InitCooldown(48, EVENT_LEVEL_END, WorldReset, l);
 
   GameProcessAddEvent(PROCESS_LEVEL, cd);
@@ -58,14 +61,15 @@ void OnWorldEvent(event_t *e, void* user){
   l->events->count = 0;
 
 }
-void GameReady(void *context){
+void GameReady(){
 
   WorldInitOnce();
-  world.stage = 0;
-  world.levels[0] = InitLevel(0);
-  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[0]);
+  world.stage = 2;
+  world.levels[2] = InitLevel(2);
+  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[2]);
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
   LevelReady(WorldGetLevel());
+  game_process.children[SCREEN_GAMEPLAY].state[PROCESS_LEVEL] = GAME_READY;
 }
 
 
@@ -103,19 +107,6 @@ bool RegisterBehaviorTree(BehaviorData data){
   return entry.root!=NULL;
 }
 
-ent_t* WorldGetEnt(const char* name){
-  return NULL;
-}
-
-ent_t* WorldGetEntById(unsigned int uid){
-  for(int i = 0; i < world.num_ent; i++){
-    if(world.ents[i]->uid == uid)
-      return world.ents[i];
-  }
-
-  return NULL;
-}
-
 int RemoveEnt(int index){
   int last_pos = world.num_ent -1;
 
@@ -146,18 +137,22 @@ int AddEnt(ent_t *e) {
 game_object_uid_i RegisterEnt( ent_t *e, Cell pos){
   e->uid = AddEnt(e);
 
+  int index = IntGridIndex(pos.x, pos.y);
   e->pos = pos;
-  game_object_uid_i gouid = GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
+  game_object_uid_i gouid = GameObjectMakeUID("ENTITY", index, WorldGetTime());
 
   if(e->sprite){
-    game_object_uid_i souid =  GameObjectMakeUID("ENTITY_SPRITE", e->uid, WorldGetTime());
+    game_object_uid_i souid =  GameObjectMakeUID("ENTITY_SPRITE", index, WorldGetTime());
     e->sprite->gouid = souid;  
     AssetAdd(e->sprite, e->type);
 
   }
 
-  if(e->signals >0)
+  if(e->signals >0){
     InitSignals(gouid, e->signals);
+    LevelTargetSubscribe(EVENT_SIGNAL_ACTION, EntSignalAction, e, gouid);
+  }
+
   HashPut(&world.ent_map, gouid, e);
   return gouid;
 }
@@ -220,9 +215,6 @@ void WorldPostUpdate(){
   }
 }
 
-void InitWorld(world_data_t data){
-  world = (world_t){0};
-}
 
 void FreeWorld(){
   for (int i = 0; i < world.num_ent; i++){
@@ -270,7 +262,9 @@ void InitGameProcess(){
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW] = DrawGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_FRAME] = UpdateGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_POST] = PostUpdate;
-   
+  
+  game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelFixedUpdate; 
+  game_process.children[PROCESS_LEVEL].process = PROCESS_LEVEL;
   game_process.next[SCREEN_ENDING] = SCREEN_TITLE;
   game_process.init[SCREEN_ENDING] = InitEndScreen;
   game_process.finish[SCREEN_ENDING] = UnloadEndScreen;
@@ -287,13 +281,14 @@ void InitGameProcess(){
 void InitGameEvents(){
   world_data_t wdata = {0};
 
-  cooldown_t* loadEvent = InitCooldown(6,EVENT_GAME_PROCESS,GameReady,NULL);
-  AddEvent(game_process.events,loadEvent);
-  InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
   game_process.game_frames = 0; 
   HashInit(&world.ent_map, MAX_ENTS *2);
   HashInit(&world.tile_map, MAX_CELLS *2);
+
+  RegisterSignals();
+
+  GameReady();
 }
 
 bool GameTransitionScreen(){
@@ -362,3 +357,32 @@ const char* GetLevelString(void){
     return "";
   return TextFormat("Level: %i", l->id);
 }
+  
+map_cell_t* WorldGetTile(hash_key_t key){
+  return HashGet(&world.tile_map, key);
+} 
+
+ent_t* WorldGetEnt(hash_key_t key){
+  return HashGet(&world.ent_map, key);
+} 
+  
+param_t WorldGetParam(DataType type, hash_key_t key){
+  param_t p = EMPTY_PARAM;
+
+  switch(type){
+    case DATA_ENT:
+      ent_t* e = WorldGetEnt(key);
+      if(e)
+      p = ParamMakeObj(type, key, e);
+      break;
+    case DATA_MAP_CELL:
+      map_cell_t* mc = WorldGetTile(key);
+      if(mc)
+      p = ParamMakeObj(type, key, mc);
+      break;
+  }
+
+  return p;
+}
+
+

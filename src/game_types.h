@@ -23,9 +23,6 @@ typedef struct bounds_s {
 } bounds_t;
 
 typedef struct{
-  struct ent_s*           target;
-  int                     moves;
-  bool                    moved;
   behavior_tree_node_t*   bt[STATE_END];
 }controller_t;
 controller_t* InitController();
@@ -38,7 +35,7 @@ struct ent_s{
   Cell                  pos, old_pos, facing;
   EntityState           state;
   controller_t          *control;
-  sprite_t              *sprite, *base;
+  sprite_t              *sprite;
   Signals               signals;
 };
 

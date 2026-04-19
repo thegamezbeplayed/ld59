@@ -15,7 +15,8 @@ ent_t* InitEnt(EntityType t){
     return NULL;
 
   e->type = t;
-  e->base = e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
+  e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
+  e->sprite->owner = e;
   e->control = InitController();
   SetState(e,STATE_SPAWN,NULL);
   return e;
@@ -25,8 +26,8 @@ ent_t* InitEntStatic(EntityType t, Tiles r){
   ent_t* e = GameCalloc("InitEnt", 1, sizeof(ent_t));
 
   e->type = t;
-  e->base = InitSpriteByID(r, SHEET_TILE);
-  e->base->owner = e;
+  e->sprite = InitSpriteByID(r, SHEET_TILE);
+  e->sprite->owner = e;
   e->control = InitController();
   e->signals = TILE_SIGNALS[r];
   SetState(e,STATE_SPAWN,NULL);
@@ -65,16 +66,16 @@ void EntSync(ent_t* e){
   if(e->control)  
     EntControlStep(e);
 
-  SpriteSync(e, e->base);
+  SpriteSync(e, e->sprite);
 }
-
+/*
 void EntRender(ent_t* e){
   if(!e->sprite)
     DrawSprite(e->base);
   else
     DrawSprite(e->sprite);
 }
-
+*/
 void EntControlStep(ent_t *e){
   if(!e->control || !e->control->bt || !e->control->bt[e->state])
     return;

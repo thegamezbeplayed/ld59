@@ -6,6 +6,58 @@
 #include "character_asset.h"
 #include "tile_assets.h"
 
+asset_manager_t AssMan;
+
+void InitAssetManager(int cap){
+
+  AssMan.layers = GameCalloc("InitAssMan", 1, sizeof(layer_renderer_t));
+
+  AssMan.tile_cap = MAX_SPRITES;
+  AssMan.tiles = GameCalloc("InitAssMan", MAX_SPRITES, sizeof(render_asset_t));
+
+  for(int i = 0; i < LAYER_DONE; i++)
+    HashInit(&AssMan.layers->sprites[i], next_pow2_int(cap*2));
+}
+
+void AssetAdd(sprite_t* s, RenderLayer l){
+  AssMan.counts[l]++;
+  HashPut(&AssMan.layers->sprites[l], s->gouid, s);
+
+}
+
+void AssetReset(void){
+  for(int i = 0; i < LAYER_DONE; i++){
+    HashClear(&AssMan.layers->sprites[i]);
+    HashInit(&AssMan.layers->sprites[i], AssMan.layers->sprites[i].cap);
+    AssMan.counts[i] = 0;
+  }
+}
+
+void AssetAddTile(sprite_t* s){
+  render_asset_t* ass = &AssMan.tiles[AssMan.num_tiles++];
+
+  ass->s = s;
+}
+
+void AssetRender(void){
+  for(int i = 0; i < AssMan.num_tiles; i++){
+    render_asset_t* ass = &AssMan.tiles[AssMan.num_tiles];
+
+    DrawSprite(ass->s);
+
+  }
+  hash_iter_t iter;  
+  for(int i = 0; i < LAYER_DONE; i++){
+    HashStart(&AssMan.layers->sprites[i], &iter);
+
+    hash_slot_t* s;
+    while ((s = HashNext(&iter))){
+      sprite_t* spr = s->value;
+      DrawSprite(spr);
+    }
+  }
+}
+
 void InitResources(){
   Image spritesImg = LoadImage(TextFormat("resources/%s",CHAR_IMAGE_PATH)); 
   SHEETS[SHEET_CHAR].sprite_sheet = GameMalloc("",sizeof(Texture2D));
@@ -269,6 +321,9 @@ void DrawSpriteAtPos(sprite_t*s , Vector2 pos){
 
 }
 void DrawSprite(sprite_t* s){
+  if(!s->slice)
+    return;
+
   if(s->is_visible)
     DrawSlice(s, s->pos,s->rot);
 }

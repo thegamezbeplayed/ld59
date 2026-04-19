@@ -53,7 +53,7 @@ behavior_tree_node_t *BuildTreeNode(BehaviorID id,behavior_params_t* parent_para
 }
 
 behavior_tree_node_t* InitBehaviorTree( BehaviorID id){
-  if(id ==BEHAVIOR_NONE)
+  if(id ==BN_NONE)
     return NULL;
   behavior_tree_node_t* node = BehaviorGetTree(id);
 
@@ -62,21 +62,6 @@ behavior_tree_node_t* InitBehaviorTree( BehaviorID id){
 
   TraceLog(LOG_WARNING,"<=====Behavior Tree %i not found=====>",id);
   return NULL;
-}
-
-BehaviorStatus BehaviorChangeState(behavior_params_t *params){
-  struct ent_s* e = params->owner;
-  if(!e || !e->control)
-    return BEHAVIOR_FAILURE;
-
-  if(!params->state)
-    return BEHAVIOR_FAILURE;
-
-  if(SetState(e, params->state,NULL))
-    return BEHAVIOR_SUCCESS;
-    
-  return BEHAVIOR_FAILURE;
-
 }
 
 
@@ -194,3 +179,25 @@ BehaviorStatus BehaviorTickConcurrent(behavior_tree_node_t *self, void *context)
 
 }
 
+BehaviorStatus BehaviorChangeState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!params->state)
+    return BEHAVIOR_FAILURE;
+
+  if(SetState(e, params->state,NULL))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_FAILURE;
+
+}
+
+BehaviorStatus BehaviorCheckSignal(behavior_params_t *params){
+  ent_t* e = params->owner;
+}
+
+BehaviorStatus BehaviorGetConditions(behavior_params_t *params){
+  ent_t* e = params->owner;
+}

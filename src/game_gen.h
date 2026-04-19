@@ -63,6 +63,7 @@ struct map_cell_s{
   TileStatus          status;
   TileFlags           flags;
   ent_t*              occupant;
+  Signals             signals;
   MapCellFn           on_enter;
 };
 
@@ -83,6 +84,7 @@ map_grid_t* InitMapGrid(level_t*);
 void MapTurnStep(map_grid_t* m);
 TileStatus MapChangeOccupant(map_grid_t* m, ent_t* e, Cell old, Cell c);
 TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c);
+TileStatus MapForceOccupant(map_grid_t* m, ent_t* e, Cell c);
 ent_t* MapGetOccupant(map_grid_t* m, Cell c, TileStatus* status);
 map_cell_t* MapGetTile(map_grid_t* map,Cell tile);
 TileStatus MapTileAvailable(map_grid_t* m, Cell c);

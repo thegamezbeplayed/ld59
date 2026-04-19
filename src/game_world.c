@@ -23,6 +23,7 @@ void WorldReset(void* param){
   HashInit(&world.tile_map, MAX_CELLS * 2);
 
 
+  AssetReset();
   GameFree("WorldReset", world.levels[world.stage]->events);
   UnloadEvents( game_process.events);
   world.levels[world.stage] = InitLevel(++world.stage);
@@ -148,13 +149,32 @@ game_object_uid_i RegisterEnt( ent_t *e, Cell pos){
   e->pos = pos;
   game_object_uid_i gouid = GameObjectMakeUID("ENTITY", e->uid, WorldGetTime());
 
+  if(e->sprite){
+    game_object_uid_i souid =  GameObjectMakeUID("ENTITY_SPRITE", e->uid, WorldGetTime());
+    e->sprite->gouid = souid;  
+    AssetAdd(e->sprite, e->type);
+
+  }
+
+  if(e->signals >0)
+    InitSignals(gouid, e->signals);
   HashPut(&world.ent_map, gouid, e);
   return gouid;
 }
 
 game_object_uid_i RegisterMapCell(map_cell_t* mc){
+  static int count = 0;
   mc->sprite->is_visible = true;
   game_object_uid_i gouid =  GameObjectMakeUID("MAP_CELL", IntGridIndex(mc->coords.x, mc->coords.y), WorldGetTime());
+  game_object_uid_i souid =  GameObjectMakeUID("TILE_SPRITE", count++, WorldGetTime());
+
+  /*
+  if(mc->sprite->slice)
+    AssetAddTile(mc->sprite);
+  */
+
+  if(mc->signals >0)
+    InitSignals(gouid, mc->signals);
 
   HashPut(&world.tile_map, gouid, mc);
   return gouid;
@@ -213,15 +233,14 @@ void FreeWorld(){
 
 void WorldRender(){
   level_t* l = WorldGetLevel();
-  if(!l)
-    return;
+  if(l)
   MapRender(l->map);
-  for(int i = 0; i < world.num_ent;i++)
-    EntRender(world.ents[i]);
+  
+  AssetRender();
 }
 
 void InitGameProcess(){
-  for(int i = 0; i < BEHAVIOR_COUNT; i++){
+  for(int i = 0; i < BN_COUNT; i++){
     if(room_behaviors[i].is_root)
       RegisterBehaviorTree(room_behaviors[i]);
   }

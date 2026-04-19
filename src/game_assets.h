@@ -8,7 +8,8 @@
 
 #define MAX_SONGS 4
 #define MAX_ANIM_FRAMES 4
-#define MAX_SPRITES 64
+#define MAX_SPRITES 128
+#define MAX_LAYER_SPRITES 64
 
 typedef struct ent_s ent_t;
 typedef struct sprite_s sprite_t;
@@ -176,16 +177,17 @@ void SpriteLoadSubTextures(sub_texture_t* data, SheetID id, int sheet_cap);
 void SpriteLoadSlicedTextures();
 //SPRITE_T===>
 struct sprite_s{
-  int             suid;
-  AnimSequence    state;
-  anim_player_t   *anim;
-  Texture2D       *sheet;
-  sprite_slice_t* slice;
-  bool            is_visible;
-  float           rot;
-  Vector2         pos, offset, dest;
-  RenderLayer     layer;
-  struct ent_s    *owner;
+  game_object_uid_i gouid;
+  int               suid;
+  AnimSequence      state;
+  anim_player_t     *anim;
+  Texture2D         *sheet;
+  sprite_slice_t*   slice;
+  bool              is_visible;
+  float             rot;
+  Vector2           pos, offset, dest;
+  RenderLayer       layer;
+  struct ent_s      *owner;
 };
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
@@ -202,6 +204,26 @@ sprite_t* SpriteAnimate(sprite_t *spr);
 void SpriteAnimateTo(sprite_t *spr, Cell from, Cell to);
 void SpritePreprocessImg(Image *img, Texture2D* out);
 
+typedef struct{
+  sprite_t*   s;
+}render_asset_t;
 
+typedef struct{
+  hash_map_t    sprites[LAYER_DONE];
+}layer_renderer_t;
+
+typedef struct{
+  int                 num_tiles, tile_cap;
+  render_asset_t*     tiles;
+  int                 counts[LAYER_DONE];
+  layer_renderer_t*   layers;
+}asset_manager_t;
+
+extern asset_manager_t AssMan;
+void InitAssetManager(int);
+void AssetRender(void);
+void AssetAdd(sprite_t*, RenderLayer);
+void AssetAddTile(sprite_t* s);
+void AssetReset(void);
 //====SPRITE_T>>
 #endif

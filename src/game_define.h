@@ -2,6 +2,9 @@
 #define __GAME_DEFINITION__
 #include "game_enum.h"
 
+#define BCTZL(uint) (int){__builtin_ctzll(uint)}
+
+
 typedef struct{
   EntityType      id;
   CharacterSprite anims[12];
@@ -10,34 +13,46 @@ typedef struct{
 
 typedef enum{
   SIG_NONE      = 0,
-  SIG_ALGIZ     = BIT64(0),
-  SIG_ANSUZ     = BIT64(1),
-  SIG_BERKANA   = BIT64(2),
-  SIG_DAGAZ     = BIT64(3),
-  SIG_EHWAZ     = BIT64(4),
-  SIG_FEHU      = BIT64(5),
-  SIG_GEBO      = BIT64(6),
-  SIG_HAGALAZ   = BIT64(7),
-  SIG_INGUZ     = BIT64(8),
-  SIG_INGWAZ    = BIT64(9),
-  SIG_ISA       = BIT64(10),
-  SIG_JERA      = BIT64(11),
-  SIG_KUANAZ    = BIT64(12),
-  SIG_LAGUZ     = BIT64(13),
-  SIG_MANNAZ    = BIT64(14),
-  SIG_NAUTHIZ   = BIT64(15),
-  SIG_OTHILA    = BIT64(16),
-  SIG_PEORTH    = BIT64(17),
-  SIG_RAIDO     = BIT64(18),
-  SIG_SOL       = BIT64(19),
-  SIG_TEIWAZ    = BIT64(20),
-  SIG_THURISAZ  = BIT64(21),
-  SIG_URUZ      = BIT64(22),
-  SIG_WUNJO     = BIT64(23),
-  SIG_YR        = BIT64(24),
+  SIG_ALGIZ     = BIT64(0), //protection
+  SIG_ANSUZ     = BIT64(1), //Gods, air
+  SIG_BERKANA   = BIT64(2), //Tree
+  SIG_DAGAZ     = BIT64(3), //Day
+  SIG_EHWAZ     = BIT64(4), //Harmony, teamwork
+  SIG_FEHU      = BIT64(5), //wealth
+  SIG_GEBO      = BIT64(6), //Gift
+  SIG_HAGALAZ   = BIT64(7), //Hail, destruction
+  SIG_INGUZ     = BIT64(8), //remove
+  SIG_INGWAZ    = BIT64(9), //Gestation, movement
+  SIG_ISA       = BIT64(10), //ice
+  SIG_JERA      = BIT64(11), //year, harvest
+  SIG_KUANAZ    = BIT64(12), //ulcer, torch
+  SIG_LAGUZ     = BIT64(13), //water
+  SIG_MANNAZ    = BIT64(14), //man
+  SIG_NAUTHIZ   = BIT64(15), //need, distress
+  SIG_OTHILA    = BIT64(16), //legacy
+  SIG_PEORTH    = BIT64(17), //myster, chance, destiny
+  SIG_RAIDO     = BIT64(18), //journey, wagon
+  SIG_SOL       = BIT64(19), //sun
+  SIG_TEIWAZ    = BIT64(20), //justice, victory, sacrifice
+  SIG_THURISAZ  = BIT64(21), //Thorn, conflict
+  SIG_URUZ      = BIT64(22), // strength, ox
+  SIG_WUNJO     = BIT64(23), //joy, fellowship
+  SIG_YR        = BIT64(24), // Death
 }Signal;
 
 typedef uint64_t Signals;
+
+typedef struct{
+  EventType   event;
+  Signals     no;
+}signal_events_d;
+
+static signal_events_d SIGNAL_EVENTS[EVENT_TILE_END] = {
+  {EVENT_TILE_COLLISION},
+  {EVENT_TILE_INSERT, SIG_ANSUZ},
+  {EVENT_SHIFT_SLAB},
+};
+
 
 static Signals TILE_SIGNALS[TILE_DONE] = {
   [SLAB_ALGIZ]    = SIG_ALGIZ,

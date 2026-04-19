@@ -1,8 +1,45 @@
 #include <raylib.h>
 #include "game_tools.h"
 #include "game_process.h"
+#include "game_strings.h"
 
+signal_pool_t SigPool;
 #define RATIO(s) ((s).ratio(&(s)))
+
+hash_key_t SignalHash(Signal s){
+  const char* name = SIG_STR[BCTZL(s)];
+
+  uint64_t hashstr = hash_string_64(name);
+
+  return hash_combine_64(hashstr, s);
+}
+
+void RegisterSignal(signal_interaction_d* sig){
+  hash_key_t key = SignalHash(sig->signal);
+
+  HashPut(&SigPool.map, key, sig);
+  SigPool.count++;
+}
+
+void RegisterSignals(void){
+    SigPool.cap = TILE_DONE;
+
+    HashInit(&SigPool.map, next_pow2_int(TILE_DONE*2));
+
+    for(int i = 0; i < TILE_DONE; i++){
+      signal_interaction_d sig = DEF_SIGINT[i];
+      if(sig.signal == SIG_NONE)
+        break;
+
+      RegisterSignal(&sig);
+    }
+}
+
+signal_interaction_d* SignalsGetEntry(Signal s){
+  hash_key_t key = SignalHash(s);
+
+  return HashGet(&SigPool.map, key);
+}
 
 // Allocates a copy of the filename without extension
 char* GetFileStem(const char* filename) {

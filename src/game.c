@@ -13,6 +13,7 @@ void InitGameplayScreen(void){
   //camera.target = player.position;
   InitCamera(2.0f,0.0f,Vector2Scale(VECTOR2_CENTER_SCREEN,0.5f),VECTOR2_CENTER_SCREEN);
 
+  InitAssetManager(MAX_LAYER_SPRITES);
   InitGameEvents();
 }
 

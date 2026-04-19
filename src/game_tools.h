@@ -102,6 +102,29 @@ typedef struct {
     uint32_t count;
 } hash_map_t;
 
+typedef struct{
+  hash_map_t* map;
+  uint32_t index;
+}hash_iter_t;
+
+
+static void HashStart(hash_map_t* m, hash_iter_t* it) {
+    it->map = m;
+    it->index = 0;
+}
+
+static hash_slot_t* HashNext(hash_iter_t* it) {
+    hash_map_t* m = it->map;
+
+    while (it->index < m->cap) {
+        hash_slot_t* s = &m->slots[it->index++];
+
+        if (s->state == 1)
+            return s;
+    }
+
+    return NULL;
+}
 void HashInit(hash_map_t* m, uint32_t cap);
 void HashFree(hash_map_t* m);
 void HashClear(hash_map_t* m);

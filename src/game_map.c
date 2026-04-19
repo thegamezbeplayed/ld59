@@ -32,10 +32,12 @@ map_grid_t* InitMapGrid(level_t* l){
   m->floor = DARKBROWN;
 
   m->tiles = GameMalloc("InitMapGrid", m->width * sizeof(map_cell_t*));
-  for(int x = 0; x < m->width; x++){
+  for(int x = 0; x < m->width; x++)
     m->tiles[x] = GameCalloc("InitMapGrid", m->height, sizeof(map_cell_t)); 
-    for(int y = 0; y < m->height; y++){
-      Tiles t = ld.tiles[x][y];
+
+  for(int y = 0; y < m->height; y++){
+    for(int x = 0; x < m->width; x++){
+    Tiles t = ld.tiles[x][y];
 
       Cell pos = CELL_NEW(x,y);
       map_cell_t* mc = InitMapCell(m, t, pos);
@@ -61,6 +63,8 @@ map_cell_t* InitMapCell(map_grid_t* m, Tiles t, Cell pos){
 
   mc->coords = pos;
   mc->tile = t;
+  if(t > 0)
+  mc->signals = TILE_SIGNALS[t];
 
   mc->sprite = InitSpriteByID(t, SHEET_TILE);
   mc->sprite->pos = CellToVector2(pos, CELL_WIDTH);
@@ -123,6 +127,27 @@ TileStatus MapSetTile(map_grid_t* m, Tiles t, Cell c){
 
   
   return TILE_SUCCESS;
+}
+
+TileStatus MapForceOccupant(map_grid_t* m, ent_t* e, Cell c){
+Cell bounds = CELL_NEW(m->width,m->height);
+  if(!cell_in_bounds(c,bounds)) 
+    return TILE_OUT_OF_BOUNDS;
+  
+  map_cell_t* mc = &m->tiles[c.x][c.y];
+
+  if(mc->status > TILE_NO_ENTRY){
+    if(mc->occupant)
+      LevelEvent(EVENT_TILE_COLLISION, e, mc->occupant->gouid);
+    return TILE_OCCUPIED;
+  }
+  
+  MapRemoveOccupant(m,e->pos);
+  mc->occupant =e;
+  LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid);
+  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
+  return TILE_SUCCESS;
+
 }
 
 TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){

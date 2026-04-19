@@ -21,4 +21,33 @@ static char* StringSplit(char* str, char delimiter){
   return token;
 }
 void StringBounds(Rectangle *b, char* buff);
+
+static const char* SIG_STR[TILE_DONE] = {
+  "ALGIZ",
+  "ANSUZ",
+  "BERKANA",
+  "DAGAZ",
+  "EHWAZ",
+  "FEHU",
+  "GEBO",
+  "HAGALAZ",
+  "INGUZ",
+  "INGWAZ",
+  "ISA",
+  "JERA",
+  "KUANAZ",
+  "LAGUZ",
+  "MANNAZ",
+  "NAUTHIZ",
+  "OTHILA",
+  "PEORTH",
+  "RAIDO",
+  "SOL",
+  "TEIWAZ",
+  "THURISAZ",
+  "URUZ",
+  "WUNJO",
+  "YR",
+
+};
 #endif

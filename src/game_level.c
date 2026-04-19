@@ -1,5 +1,6 @@
 #include "game_process.h"
 #include "game_control.h"
+#include "game_helpers.h"
 
 solution_t* PuzzleGetEntry(stage_puzzle_t* p, game_object_uid_i gouid){
   for(int i = 0; i < p->count; i++){
@@ -77,7 +78,7 @@ void OnLevelEvent(event_t *e, void* user){
         return;
 
       map_cell_t* mc = WorldGetTile(e->iuid);
-      if(mc->tile == TILE_BLANK)
+      if(mc->tile <= TILE_BLANK)
         return;
 
       SolveStatus status = LevelCheckSolution(mc, p);
@@ -90,6 +91,14 @@ void OnLevelEvent(event_t *e, void* user){
     case EVENT_TILE_INSERT:
       map_cell_t* m = WorldGetTile(e->iuid);
       ent_t* slab = e->data;
+      if(!CanSignalEvent(e->type, slab->signals)){
+        if(MapForceOccupant(WorldGetMap(), slab, m->coords) < TILE_ISSUES){
+          slab->old_pos = slab->pos;
+          slab->pos = m->coords;
+          SetState(slab, STATE_PLACED, NULL);
+        }
+        return;
+      }
       if(MapSetTile(WorldGetMap(), TILE_BLANK, m->coords) < TILE_ISSUES){
         MapRemoveOccupant(WorldGetMap(), slab->pos);
         SetState(slab, STATE_DIE,NULL);

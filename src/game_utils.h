@@ -298,6 +298,55 @@ behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, in
 behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count);
 
 BehaviorStatus BehaviorChangeState(behavior_params_t *params);
-
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
+
+BehaviorStatus BehaviorGetConditions(behavior_params_t *params);
+static inline behavior_tree_node_t* LeafGetConditions(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorGetConditions,params); }
+
+BehaviorStatus BehaviorCheckSignal(behavior_params_t *params);
+static inline behavior_tree_node_t* LeafCheckSignal(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckSignal,params); }
+
+typedef struct {
+  BehaviorID           id;
+  bool                 is_root;
+  BehaviorTreeType     bt_type;
+  behavior_tree_node_t *(*func)(behavior_params_t *);
+  bool          param_overide;
+  EntityState   state;
+  int           num_children;
+  BehaviorID   children[5];
+} BehaviorData;
+
+typedef struct{
+  DataType        type;
+  int             state;
+  StateComparator fn;
+}signal_condition_t;
+
+static signal_condition_t SIGCON[COND_ALL] = {
+  [COND_ENTER] = {DATA_EVENT, EVENT_ENTER_CELL, EQUAL_TO}
+};
+
+typedef bool (*SignalAction)(param_t user, param_t other);
+typedef struct{
+  Signal              signal;
+  Signals             interacts;
+  Condition           condition;
+  SignalAction        action;
+}signal_interaction_d;
+
+void InitSignals(game_object_uid_i, Signals);
+bool ActionGlide(param_t user, param_t other);
+
+static signal_interaction_d DEF_SIGINT[TILE_DONE] = {
+  {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide},
+};
+
+typedef struct{
+  int         cap, count;
+  hash_map_t  map;
+}signal_pool_t;
+extern signal_pool_t SigPool;
+void RegisterSignals(void);
+signal_interaction_d* SignalsGetEntry(Signal);
 #endif

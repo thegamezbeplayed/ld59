@@ -15,8 +15,8 @@ typedef struct{
 
 static level_layout_t LVLS[LVL_ALL] = {
   {
-      10, 10,
-      {4,3},
+    10, 10,
+    {4,3},
     .tiles = {
       [8][3]    = TILE_URUZ,
       [6][7]  = TILE_FEHU
@@ -48,22 +48,44 @@ static level_layout_t LVLS[LVL_ALL] = {
       [2][2] = SLAB_LAGUZ,
       [7][8] = SLAB_LAGUZ,
     }
-  
-  }
+  },
+  {
+    12, 10,
+    {3, 1},
+    .tiles = {
+      [7][0] = TILE_VOID,
+      [7][1] = TILE_VOID,
+      [7][2] = TILE_VOID,
+      [7][3] = TILE_VOID,
+      [7][4] = TILE_VOID,
+      [7][5] = TILE_VOID,
+      [7][6] = TILE_VOID,
+      [7][7] = TILE_VOID,
+      [7][8] = TILE_VOID,
+      [7][9] = TILE_VOID,
+      [0][4] = TILE_VOID,
+      [1][4] = TILE_VOID,
+      [2][4] = TILE_VOID,
+      [3][4] = TILE_VOID,
+      [4][4] = TILE_VOID,
+      [5][4] = TILE_VOID,
+      [6][4] = TILE_VOID,
+      [8][4] = TILE_VOID,
+      [9][4] = TILE_VOID,
+      [10][4] = TILE_VOID,
+      [11][4] = TILE_VOID,
+    },
+    .slabs = {
+      [2][2] = SLAB_ANSUZ,
+      [3][2] = SLAB_GEBO
+    }
+  }  
 };
-typedef struct {
-  BehaviorID           id;
-  bool                 is_root;
-  BehaviorTreeType     bt_type;
-  behavior_tree_node_t *(*func)(behavior_params_t *);
-  bool          param_overide;
-  EntityState   state;
-  int           num_children;
-  BehaviorID   children[5];
-} BehaviorData;
 
-static const BehaviorData room_behaviors[BEHAVIOR_COUNT] = {
-  {BEHAVIOR_NONE} ,
-  {BEHAVIOR_CHANGE_STATE  ,false,BT_LEAF,LeafChangeState,false, STATE_IDLE,0,{}},
+static const BehaviorData room_behaviors[BN_COUNT] = {
+  {BN_NONE} ,
+  {BN_CHANGE_STATE, false, BT_LEAF,LeafChangeState},
+  {BN_CHECK_SIGNAL, false, BT_LEAF, LeafCheckSignal},
+  {BN_GET_COND,     false, BT_LEAF, LeafGetConditions},
 };
 #endif

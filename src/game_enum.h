@@ -4,6 +4,10 @@
 #define BIT64(n) (1ULL << (n))
 
 typedef enum{
+  EVENT_TILE_COLLISION,
+  EVENT_TILE_INSERT,
+  EVENT_SHIFT_SLAB,
+  EVENT_TILE_END,
   EVENT_GAME_PROCESS,
   EVENT_INTERACTION,
   EVENT_PLAY_SFX,
@@ -14,14 +18,12 @@ typedef enum{
   EVENT_FINISH,
   EVENT_ENT_ACTION,
   EVENT_ENT_DIE,
+  EVENT_ENTER_CELL,
   EVENT_LEVEL_TURN_END,
   EVENT_LEVEL_SHIFT,
   EVENT_LEVEL_CHECK,
   EVENT_LEVEL_SOLVED,
   EVENT_LEVEL_END,
-  EVENT_TILE_COLLISION,
-  EVENT_TILE_INSERT,
-  EVENT_SHIFT_SLAB,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -39,14 +41,18 @@ typedef enum{
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_PUSHING,
   STATE_SHIFTING,
+  STATE_PLACED,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;
 
 typedef enum{
-  BEHAVIOR_NONE,
-  BEHAVIOR_CHANGE_STATE,
-  BEHAVIOR_COUNT
+  BN_NONE,
+  BN_CHANGE_STATE,
+  BN_CHECK_SIGNAL,
+  BN_GET_COND,
+  BN_SIGNAL,
+  BN_COUNT
 }BehaviorID;
 
 typedef enum{
@@ -70,7 +76,7 @@ typedef enum {
   DATA_GOUID,
   DATA_STRING,
   DATA_ENT,
-  DATA_ENV,
+  DATA_EVENT,
   DATA_MAP_CELL,
   DATA_ELEM,
   DATA_ALL,
@@ -151,6 +157,7 @@ typedef enum{
 typedef enum{
   LVL_TUT,
   LVL_BASIC,
+  LVL_VOIDS,
   LVL_ALL,
 }Levels;
 
@@ -179,6 +186,11 @@ typedef enum{
   EVS_KILL
 }EventStatus;
 
+typedef enum{
+  COND_NONE,
+  COND_ENTER,
+  COND_ALL,
+}Condition;
 
 typedef enum{
   SOLV_NO,

@@ -13,25 +13,39 @@ TreeCacheEntry tree_cache[18] = {0};
 int tree_cache_count = 0;
 ent_t* player = NULL;
 
-void WorldReset(payload_t* p){
-  world.num_ent = 0;
-
-  HashClear(&world.ent_map);
-  HashClear(&world.tile_map);
-
-  HashInit(&world.ent_map, MAX_ENTS * 2);
-  HashInit(&world.tile_map, MAX_CELLS * 2);
-
-
-  AssetReset();
-  GameFree("WorldReset", world.levels[world.stage]->events);
-  UnloadEvents( game_process.events);
-  world.levels[world.stage] = InitLevel(++world.stage);
-  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[world.stage]);
-  game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
-  LevelReady(WorldGetLevel());
-
+void Subscribe(EventType event, EventCallback cb, void* data){
+  event_sub_t* sub = EventSubscribe(world.events, event, cb, data);
+  sub->uid = -1;
 }
+
+
+void ScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame tf, int step){
+  switch(tf){
+    case TF_TURN:
+      step += WorldGetTurn();
+      break;
+    case TF_UPDATE:
+      step += WorldGetTime();
+      break;
+    default:
+      return;
+      break;
+  }
+
+  event_t* event = GameCalloc("ScheduleEvent",1, sizeof(event_t));
+
+  *event = (event_t){
+    .type = type,
+    .data = data,
+    .iuid = uid,
+    .max  = -1,
+    .timing = tf,
+    .scheduled = step,
+  };
+
+  EventSchedule(world.events, event);
+}
+
 
 bool TogglePause(ui_menu_t* m){
   if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY)
@@ -52,23 +66,43 @@ void GameSetState(GameState state){
 void OnWorldEvent(event_t *e, void* user){
   level_t* l = e->data;
 
-  param_t p = ParamMakeObj(DATA_LEVEL, l->id, l);
-  payload_t* pay = InitPayloadSingle(p); 
-  cooldown_t* cd = InitCooldown(48, EVENT_LEVEL_END, WorldReset, l);
+  switch(e->type){
+    case EVENT_LEVEL_END:
+      ScheduleEvent(EVENT_LEVEL_CLEAR, l, l->id, TF_UPDATE, 48);
 
-  GameProcessAddEvent(PROCESS_LEVEL, cd);
+      //l->events->count = 0;
+      break;
+    case EVENT_LEVEL_CLEAR:
+      world.num_ent = 0;
 
-  l->events->count = 0;
+      HashClear(&world.ent_map);
+      HashClear(&world.tile_map);
 
+      HashInit(&world.ent_map, MAX_ENTS * 2);
+      HashInit(&world.tile_map, MAX_CELLS * 2);
+
+
+      AssetReset();
+      GameFree("WorldReset", world.levels[world.stage]->events);
+      UnloadEvents( game_process.events);
+      world.levels[world.stage] = InitLevel(++world.stage);
+      LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[world.stage]);
+      game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
+      LevelReady(WorldGetLevel());
+
+      break;
+  }
 }
+
 void GameReady(){
 
   WorldInitOnce();
-  world.stage = 2;
-  world.levels[2] = InitLevel(2);
-  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[2]);
-  game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
+  world.stage = 0;
+  world.levels[0] = InitLevel(0);
   LevelReady(WorldGetLevel());
+  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[0]);
+  Subscribe(EVENT_LEVEL_CLEAR, OnWorldEvent, world.levels[0]);
+  game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
   game_process.children[SCREEN_GAMEPLAY].state[PROCESS_LEVEL] = GAME_READY;
 }
 
@@ -183,6 +217,7 @@ void WorldInitOnce(){
 }
 
 void WorldPreUpdate(){
+  EventBusStep(world.events);
   InteractionStep();
   InputCheck(WorldGetTurn());
 }
@@ -288,6 +323,7 @@ void InitGameEvents(){
 
   RegisterSignals();
 
+  world.events = InitEventBus(64);
   GameReady();
 }
 

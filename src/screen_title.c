@@ -11,7 +11,7 @@ void InitTitleScreen(void)
 // Title Screen Update logic
 void UpdateTitleScreen(void)
 {
-    // TODO: Update TITLE screen variables here!
+  UISync(FETCH_UPDATE);
 }
 
 // Title Screen Draw logic
@@ -19,8 +19,7 @@ void DrawTitleScreen(void)
 {
   BeginDrawing();
   ClearBackground(RAYWHITE);
-
-  UISync(FETCH_UPDATE);
+  UIRender();
   EndDrawing();
 }
 

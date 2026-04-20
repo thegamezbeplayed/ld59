@@ -1,5 +1,6 @@
 #include "game_process.h"
 #include "game_types.h"
+#include "game_helpers.h"
 
 void OnSignalEvent(event_t* ev, void* user){
   signal_interaction_d* sigint = user;
@@ -8,12 +9,39 @@ void OnSignalEvent(event_t* ev, void* user){
   if(ev->type != sigcon.state)
     return;
 
-  param_t p = EMPTY_PARAM;
+  param_t p = WorldGetParam(DATA_ENT, sigint->user);
+
   param_t other = EMPTY_PARAM;
 
   switch(ev->type){
     case EVENT_ENTER_CELL:
-      p = WorldGetParam(DATA_ENT, ev->iuid);
+      break;
+    case EVENT_TILE_MOVE:
+      ent_t* o = ev->data;
+      other = ParamMakeObj(DATA_ENT, o->gouid, 0);
+      break;
+    case EVENT_TILE_DIST:
+      if(ev->payload.type != DATA_INT ||
+          sigint->val.type != DATA_INT)
+        return;
+
+      int dist = ParamReadInt(&ev->payload);
+      int val = ParamReadInt(&sigint->val);
+      if(!sigcon.fn(dist, val))
+        return;
+
+      map_cell_t* mc = ev->data;
+      switch(sigint->condition){
+        case COND_NEAR:
+          if(!mc->occupant)
+            return;
+
+          other = ParamMakeObj(DATA_ENT, mc->occupant->gouid, mc->occupant);
+          break;
+        default:
+          return;
+          break;
+      }
       break;
     default:
       return;
@@ -31,7 +59,10 @@ void OnSignalEvent(event_t* ev, void* user){
 void InitSignalEvent(game_object_uid_i gouid, signal_interaction_d* sint,
     signal_condition_t* scond){
 
-  LevelTargetSubscribe(scond->state, OnSignalEvent, sint, gouid);
+  if(scond->targeted)
+    LevelTargetSubscribe(scond->state, OnSignalEvent, sint, gouid);
+  else
+    LevelSubscribe(scond->state, OnSignalEvent, sint);
 }
 
 void InitSignals(game_object_uid_i gouid, Signals signals){
@@ -39,8 +70,16 @@ void InitSignals(game_object_uid_i gouid, Signals signals){
     Signal sig = signals & -signals;
     signals &= signals -1;
 
-    signal_interaction_d* sigint = SignalsGetEntry(sig);
+    signal_interaction_d* base = SignalsGetEntry(sig);
+    if(!base)
+      continue;
 
+
+    signal_interaction_d* sigint = GameCalloc("InitSignal", 1, sizeof(signal_interaction_d));
+        memcpy(sigint, base, sizeof(signal_interaction_d));
+
+    sigint->val = ParamMake(DATA_INT, sizeof(int), &sigint->raw);
+    sigint->user = gouid;
     if(!sigint || sigint->signal != sig)
       continue;
 
@@ -64,8 +103,22 @@ bool ActionGlide(param_t user, param_t other){
   int x = e->facing.x + e->pos.x;
   int y = e->facing.y + e->pos.y;
 
-  if(y==10)
-    DO_NOTHING();
-  TraceLog(LOG_INFO, "GLIDE TO [%i, %i]",x, y);
   return EntGridStep(e, e->facing) < TILE_ISSUES;
+}
+
+
+bool ActionRepel(param_t user, param_t other){
+  if(other.type != DATA_ENT && user.type != DATA_ENT)
+   return false;
+
+  ent_t* e = user.data;
+
+  ent_t* tar = other.data;
+
+  if(!CanSignalEvent(EVENT_SIGNAL_ACTION, tar->signals))
+    return false;
+
+
+  Cell dir = cell_dir(e->pos, tar->pos);
+  return EntGridStep(tar, dir) < TILE_ISSUES;
 }

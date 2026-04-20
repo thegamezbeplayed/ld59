@@ -27,11 +27,11 @@ void RegisterSignals(void){
     HashInit(&SigPool.map, next_pow2_int(TILE_DONE*2));
 
     for(int i = 0; i < TILE_DONE; i++){
-      signal_interaction_d sig = DEF_SIGINT[i];
+      signal_interaction_d sig = SLAB_SIGINT[i];
       if(sig.signal == SIG_NONE)
         break;
 
-      RegisterSignal(&DEF_SIGINT[i]);
+      RegisterSignal(&SLAB_SIGINT[i]);
     }
 }
 

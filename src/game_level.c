@@ -86,6 +86,7 @@ void OnLevelEvent(event_t *e, void* user){
       PuzzleUpdateSolution(l->puzzle, mc, status);
       break;
     case EVENT_LEVEL_SOLVED:
+      TraceLog(LOG_INFO, "YOU DID IT");
       LevelEvent(EVENT_LEVEL_END, l, l->id);
       break;
     case EVENT_TILE_INSERT:
@@ -197,6 +198,22 @@ void LevelFixedUpdate(void){
   EventBusStep(l->events);
 }
 
+void LevelEventPayload(EventType type, void* data, uint64_t uid, param_t p){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return;
+
+  event_t event = {
+    .type = type,
+    .data = data,
+    .iuid = uid,
+    .max  = -1,
+    .payload = p
+  };
+
+  EventEmit(l->events, &event);
+}
+
 void LevelEventOnce(EventType type, void* data, uint64_t uid){
  event_t event = {
     .type = type,
@@ -235,7 +252,6 @@ void LevelScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame tf, 
     .timing = tf,
     .scheduled = step,
   };
-
 
   EventSchedule(l->events, event);
 }

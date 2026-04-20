@@ -31,6 +31,8 @@ map_grid_t* InitMapGrid(level_t* l){
   m->height = ld.hei;
   m->floor = DARKBROWN;
 
+  int area = ld.wid * ld.hei;
+  HashInit(&m->hash, next_pow2_int(1+area));
   m->tiles = GameMalloc("InitMapGrid", m->width * sizeof(map_cell_t*));
   for(int x = 0; x < m->width; x++)
     m->tiles[x] = GameCalloc("InitMapGrid", m->height, sizeof(map_cell_t)); 
@@ -43,6 +45,9 @@ map_grid_t* InitMapGrid(level_t* l){
       map_cell_t* mc = InitMapCell(m, t, pos);
 
       mc->gouid = RegisterMapCell(mc);
+
+      mc->on_enter = MapCellOccupied;      
+      HashPut(&m->hash, mc->gouid, mc);
       
       if(t <= TILE_BLANK){
         if(t== TILE_VOID)
@@ -68,6 +73,7 @@ map_cell_t* InitMapCell(map_grid_t* m, Tiles t, Cell pos){
 
   mc->sprite = InitSpriteByID(t, SHEET_TILE);
   mc->sprite->pos = CellToVector2(pos, CELL_WIDTH);
+
 
   return mc;
 }
@@ -144,8 +150,10 @@ Cell bounds = CELL_NEW(m->width,m->height);
   
   MapRemoveOccupant(m,e->pos);
   mc->occupant =e;
-  LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid);
-  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
+  
+  if(mc->on_enter)
+    mc->on_enter(m, mc, e);
+
   return TILE_SUCCESS;
 
 }
@@ -176,9 +184,28 @@ TileStatus MapSetOccupant(map_grid_t* m, ent_t* e, Cell c){
   MapRemoveOccupant(m,e->pos);
   mc->occupant =e;
   mc->status = TILE_OCCUPIED;
-  LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid); 
-  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
+  if(mc->on_enter)
+    mc->on_enter(m, mc, e);
+
   return TILE_SUCCESS;
+}
+
+void MapCellOccupied(map_grid_t* m, map_cell_t* mc, ent_t* e){
+  LevelEvent(EVENT_TILE_MOVE, e, mc->gouid);
+ 
+  hash_iter_t iter;
+  HashStart(&m->hash, &iter);
+
+  hash_slot_t* s;
+  while((s = HashNext(&iter))){
+    map_cell_t* other = s->value;
+    int dist = cell_distance(other->coords, mc->coords);
+
+    param_t p = ParamMake(DATA_INT, sizeof(int), &dist);
+    LevelEventPayload(EVENT_TILE_DIST, other, mc->occupant->gouid, p);
+  }
+    LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid);
+  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
 }
 
 map_cell_t* MapGetTile(map_grid_t* map,Cell tile){

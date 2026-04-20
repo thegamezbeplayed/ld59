@@ -107,6 +107,8 @@ typedef enum{
   UI_ICON,
   UI_LINE,
   UI_TEXT,
+  UI_ANIMATEXT,
+  UI_TITLE,
   UI_GAME,
   UI_TOOL_TIP,
   UI_CHAR_SPR,
@@ -238,6 +240,13 @@ param_t ElementOwnerTextAt(void*);
 param_t ElementPresetContext(void*);
 param_t ElementIndexContext(void* p);
 
+typedef float (*EffectFn)(float t, float b, float c, float d);
+typedef struct{
+  float       curren_t, b_egin, c_hange, d_ur;
+  Color       *target;
+  EffectFn    fn;
+}ui_effect_t;
+
 struct ui_element_s{
   uint32_t            hash;
   game_object_uid_i   gouid;
@@ -263,7 +272,9 @@ struct ui_element_s{
   ElementDataContext  get_ctx;
   GameObjectParam     params[4];
   param_t             ctx;
-  char                delimiter;
+  char                delimiter[1];
+  ui_effect_t         *effect;
+  Color               text_color;
 };
 
 typedef struct{
@@ -281,7 +292,7 @@ typedef struct{
   int                 num_children;
   const char          kids[MAX_SUB_ELE][MAX_NAME_LEN];
   GameObjectParam     params[MAX_SUB_ELE][PARAM_ALL];
-  char                text[MAX_NAME_LEN];
+  char                text[MAX_LINE_LEN];
   const char          format;
   const char          delimiter; 
 }ui_element_d;
@@ -316,14 +327,17 @@ bool ElementShowTooltip(ui_element_t* e);
 bool ElementSetTooltip(ui_element_t* e);
 bool ElementSetActiveTab(ui_element_t* e);
 bool ElementSetContext(ui_element_t* e);
+bool ElementSetFlash(ui_element_t* e);
 
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
 element_value_t* GetOwnerValue(ui_element_t* e, param_t context);
 element_value_t* GetOwnerText(ui_element_t* e, param_t context);
+element_value_t* GetOwnerTextAt(ui_element_t* e, param_t context);
 element_value_t* GetContextValueName(ui_element_t* e, param_t context);
 element_value_t* GetElementName(ui_element_t* e, param_t context);
+element_value_t* GetTitleScreen(ui_element_t* e, param_t context);
 
 typedef struct ui_menu_s{
   MenuId        id;
@@ -363,6 +377,8 @@ bool MenuProcessReady(ui_menu_t*);
 typedef struct{
   Font         font;
   float        text_size, text_spacing;
+  float        title_size, title_spacing;
+  Color        title_col;
   //MenuId      open_menu;
   KeyboardKey  menu_key[MENU_DONE];
   ui_menu_t    menus[MENU_DONE];
@@ -395,6 +411,9 @@ static state_change_requirement_t ELEM_STATE_REQ[ELEMENT_DONE] = {
   {ELEMENT_TOGGLE, GREATER_THAN, ELEMENT_IDLE},
   {ELEMENT_ACTIVATED, NOT_EQUAL_TO, ELEMENT_HIDDEN}
 };
-
+int GuiTitle(Rectangle bounds, const char *text);
+int GuiText(Rectangle bounds, const char *text);
 int GuiHeader(Rectangle bounds, const char *text);
+void GuiAnimatext(Rectangle bounds, const char *text, ui_effect_t*);
+
 #endif

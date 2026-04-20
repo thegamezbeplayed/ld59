@@ -29,6 +29,7 @@ struct event_s{
   uint64_t          iuid;
   TimeFrame         timing;
   int               scheduled;
+  param_t           payload;
 };
 
 event_bus_t* InitEventBus(int cap);

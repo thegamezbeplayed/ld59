@@ -15,6 +15,25 @@ static void replace_char(char* str, char find, char replace) {
   }
 }
 
+static char* SubString(char* base, char* delim, int at){
+  int index = 0;
+
+  char* str = GameCalloc("SubString", MAX_LINE_LEN, sizeof(char));
+
+  strcpy(str, base);
+  char *token = strtok(str, delim);
+
+  while (token != NULL) {
+    if (index == at) {
+      return token;
+      break;
+    }
+
+    token = strtok(NULL, delim);
+    index++;
+  }
+}
+
 static char* StringSplit(char* str, char delimiter){
   char* token = strtok(str, &delimiter);
 

@@ -133,6 +133,8 @@ void InitUI(void){
   GuiSetStyle(DEFAULT, BORDER_COLOR_NORMAL, ColorToInt(col));
   GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, ColorToInt(col));
 
+  ui.title_size = 48;
+  ui.title_col = BLUE,
   ui.text_size = GuiGetStyle(DEFAULT, TEXT_SIZE);
   ui.text_spacing = GuiGetStyle(DEFAULT, TEXT_SPACING);
   SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
@@ -152,10 +154,6 @@ void InitUI(void){
     ui.menu_key[i] = KEY_NULL;
 
 
-  ui_element_t *continueBtn = InitElement("CONTINUE_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_CENTER|ALIGN_MID,0); 
-  strcpy(continueBtn->text, "CONTINUE");
-  continueBtn->cb[ELEMENT_ACTIVATE] = UITransitionScreen;
- 
   InitMenuById(MENU_MAIN);
   InitMenuById(MENU_HUD);
 }
@@ -397,15 +395,22 @@ void ElementRender(ui_element_t* e){
     case UI_LABEL:
       state = GuiLabel(e->bounds,e->text);
       break;
+    case UI_ANIMATEXT:
+        GuiAnimatext(e->bounds, e->text, e->effect); 
+        e->effect->curren_t += 0.016f;
+      break;
     case UI_TEXT:
-       GuiLabel(e->bounds,e->text);
-       break;
+      GuiText(e->bounds,e->text);
+      break;
     case UI_HEADER:
        Rectangle header = e->bounds;
        if(e->owner && e->owner->bounds.width > header.width)
          header.width = e->owner->bounds.width;
 
        GuiHeader(header, e->text);
+       break;
+    case UI_TITLE:
+       GuiTitle(e->bounds, e->text);
        break;
     case UI_TOOL_TIP:
       //active_tooltip = e;
@@ -900,6 +905,25 @@ bool ElementShowContext(ui_element_t* e){
 
 }
 
+ui_effect_t* InitUIEffect(EffectFn fn, Color* col){
+  ui_effect_t* e = GameCalloc("InitUIEffect", 1, sizeof(ui_effect_t));
+
+  e->target = col;
+  e->fn = fn;
+  e->b_egin = 0.0f;
+  e->d_ur = 1.0f;
+  e->curren_t = 0.0f;
+  e->c_hange = 10.0f;
+
+  return e;
+}
+
+bool ElementSetFlash(ui_element_t* e){
+  e->text_color = BLUE;
+  e->effect = InitUIEffect(EaseSineIn, &e->text_color);
+  return true;
+}
+
 bool ElementSetContext(ui_element_t* e){
   if(e->get_ctx){
     e->ctx = e->get_ctx(e);
@@ -917,6 +941,9 @@ bool ElementSetContext(ui_element_t* e){
 void ElementValueSyncSize(ui_element_t *e, element_value_t* ev){
   bool resize = false;
   ev->text_hei = 0;
+  int tsize = ui.text_size;
+  if(e->type == UI_TITLE)
+    tsize = ui.title_size;
   switch(ev->type){
     case VAL_LN:
       for(int i = 0; i < ev->num_ln; i++){
@@ -934,9 +961,10 @@ void ElementValueSyncSize(ui_element_t *e, element_value_t* ev){
       }
       break;
     case VAL_CHAR:
-       Vector2 size = MeasureTextEx(ui.font, ev->c, ui.text_size, ui.text_spacing); 
+       Vector2 size = MeasureTextEx(ui.font, ev->c, tsize, ui.text_spacing); 
        size.x += GuiGetStyle(LABEL,TEXT_PADDING ) *3;
        ev->text_len = size.x;
+       ev->text_hei = size.y;
        if(e->bounds.width < ev->text_len){
          e->bounds.width = ev->text_len;
          e->width = ev->text_len;
@@ -997,6 +1025,26 @@ element_value_t* GetOwnerValue(ui_element_t* e, param_t context){
 
   return e->owner->value;
 
+}
+
+element_value_t* GetOwnerTextAt(ui_element_t* e, param_t context){
+  if(!e->owner)
+    return NULL;
+
+  if(e->owner->text[0] == '\0')
+    return NULL;
+
+  element_value_t *ev = GameCalloc("GetOwnerText", 1,sizeof(element_value_t));
+
+  ev->type = VAL_CHAR;
+  ev->rate = FETCH_ONCE;
+
+  ev->c = GameMalloc("GetOwnerText", sizeof(char)*MAX_NAME_LEN);
+
+  strcpy(ev->c, SubString(e->owner->text, e->owner->delimiter, e->index));
+  ElementValueSyncSize(e, ev);
+
+  return ev;
 }
 
 element_value_t* GetOwnerText(ui_element_t* e, param_t context){
@@ -1150,6 +1198,31 @@ int GuiTooltipControl(Rectangle bounds, const char* text){
     if (text != NULL) GuiStatusBar(statusBar, text);  // Draw panel header as status bar
     return result;
 
+}
+void GuiAnimatext(Rectangle bounds, const char *text, ui_effect_t* e){
+
+  e->target->a = e->fn(e->curren_t, e->b_egin, e->c_hange, e->d_ur);
+  GuiDrawText(text, GetTextBounds(LABEL, bounds), GuiGetStyle(LABEL, TEXT_ALIGNMENT), *e->target);
+}
+
+int GuiText(Rectangle bounds, const char *text){
+
+  GuiDrawText(text, GetTextBounds(LABEL, bounds), GuiGetStyle(LABEL, TEXT_ALIGNMENT),ui.title_col );
+
+  return 0;
+}
+
+
+int GuiTitle(Rectangle bounds, const char *text){
+
+  int orig = GuiGetStyle(DEFAULT, TEXT_SIZE);
+
+  GuiSetStyle(DEFAULT, TEXT_SIZE, ui.title_size);
+  GuiDrawText(text, GetTextBounds(LABEL, bounds), GuiGetStyle(LABEL, TEXT_ALIGNMENT),ui.title_col );
+
+  GuiSetStyle(DEFAULT, TEXT_SIZE, orig);
+  
+  return 0;
 }
 
 int GuiLabel(Rectangle bounds, const char *text)

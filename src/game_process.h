@@ -117,6 +117,7 @@ struct level_s{
 level_t* InitLevel(Levels id);
 void LevelReady(level_t* l);
 void LevelEventOnce(EventType type, void* data, uint64_t uid);
+void LevelEventPayload(EventType type, void* data, uint64_t uid, param_t);
 void LevelEvent(EventType type, void* data, uint64_t uid);
 void LevelScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame, int);
 void LevelTargetSubscribe(EventType, EventCallback, void*, uint64_t);
@@ -137,6 +138,7 @@ typedef struct world_s{
   bool          floatytext_used[MAX_EVENTS];
   level_t       *levels[LVL_ALL];
   Levels        stage;
+  event_bus_t   *events;
 } world_t;
 extern world_t world;
 void OnWorldEvent(event_t *e, void* user);

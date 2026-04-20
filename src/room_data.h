@@ -15,19 +15,19 @@ typedef struct{
 
 static level_layout_t LVLS[LVL_ALL] = {
   {
-    10, 10,
+    6, 6,
     {4,3},
     .tiles = {
-      [8][3]    = TILE_URUZ,
-      [6][7]  = TILE_FEHU
+      [5][0]    = TILE_URUZ,
+      [0][5]  = TILE_FEHU
     },
     .slabs = {
-      [6][5]  = SLAB_FEHU,
-      [7][6] = SLAB_URUZ, 
+      [4][1]  = SLAB_FEHU,
+      [1][2] = SLAB_URUZ, 
     }
   },
   {
-    10,10,
+    8,8,
     {3,6},
     .tiles = {
       [5][0] = TILE_VOID,
@@ -41,22 +41,24 @@ static level_layout_t LVLS[LVL_ALL] = {
       [5][8] = TILE_VOID,
       [5][9] = TILE_VOID,
       [1][1] = TILE_LAGUZ,
-      [9][9] = TILE_SOL,
+      [7][7] = TILE_SOL,
     },
     .slabs = {
       [4][3] = SLAB_SOL,
       [2][2] = SLAB_LAGUZ,
-      [7][8] = SLAB_LAGUZ,
+      [6][5] = SLAB_LAGUZ,
     }
   },
   {
     10, 10,
     {5,4},
     .tiles = {
-
+      [3][3] = TILE_ISA,
     },
     .slabs = {
-      [3][2] = SLAB_ISA
+      [3][2] = SLAB_ISA,
+      [5][5] = SLAB_URUZ,
+      [7][7] = SLAB_THURISAZ
     }
   },
   {

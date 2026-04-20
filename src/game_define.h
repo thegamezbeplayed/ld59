@@ -39,7 +39,6 @@ typedef enum{
   SIG_WUNJO     = BIT64(23), //joy, fellowship
   SIG_YR        = BIT64(24), // Death
 }Signal;
-
 typedef uint64_t Signals;
 
 typedef struct{
@@ -50,7 +49,10 @@ typedef struct{
 static signal_events_d SIGNAL_EVENTS[EVENT_TILE_END] = {
   {EVENT_TILE_COLLISION},
   {EVENT_TILE_INSERT, SIG_ANSUZ},
+  {EVENT_TILE_MOVE},
+  {EVENT_TILE_DIST},
   {EVENT_SHIFT_SLAB},
+  {EVENT_SIGNAL_ACTION, SIG_URUZ},
 };
 
 

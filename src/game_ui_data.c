@@ -13,40 +13,63 @@ ui_menu_d MENU_DATA[MENU_DONE] = {
 
 ui_element_d ELEM_DATA[ELE_COUNT] = {
   {"TITLE_MENU_DOM", VECTOR2_ZERO, FIXED_MENU_FULL, UI_CONTAINER,
-    ELEMENT_NONE, LAYOUT_VERTICAL, ALIGN_MID | ALIGN_CENTER,
+    ELEMENT_NONE, LAYOUT_STACK, ALIGN_MID | ALIGN_CENTER,
     .cb = {
       [ELEMENT_IDLE] = ElementActivateChildren,
       [ELEMENT_SHOW] = ElementShowChildren,
     },
     {
       [UI_MARGIN_TOP] = 8, [UI_MARGIN_LEFT] = 6,
-      [UI_PADDING_TOP] = 4, [UI_PADDING_LEFT] = 8 
+      [UI_PADDING_TOP] = 24, [UI_PADDING_LEFT] = 8 
     },
-    2, {
+    1, {
+    //  "TITLE_BACKGROUND"
       "TITLE_PANEL",
-      "PLAY_BTN"
-    }
-
+    },
+    .text = "Signals Crossed"
   },
-  {"TITLE_PANEL", VECTOR2_ZERO, VECTOR2_ZERO, UI_BOX,
-    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_CENTER | ALIGN_MID ,
+  {"TITLE_PANEL", VECTOR2_ZERO, VECTOR2_ZERO, UI_GROUP, ELEMENT_NONE,
+    LAYOUT_VERTICAL, ALIGN_MID | ALIGN_CENTER,
     .cb = {
       [ELEMENT_IDLE] = ElementActivateChildren,
       [ELEMENT_SHOW] = ElementShowChildren,
     },
     {
-      [UI_MARGIN_TOP] = 32, [UI_MARGIN_LEFT] = 6,
-      [UI_PADDING_TOP] = 12, [UI_PADDING_LEFT] = 8
+      [UI_MARGIN_TOP] = -36, [UI_PADDING_BOT] = 36, [UI_PADDING_TOP] = -24
     },
-    0, {"HEADER_CHAR_SPR"},
-    .text = "ASS"
+    5,{
+      "TITLE_HEADER",
+      "TEXT_HEADER",
+      "TEXT_HEADER",
+      "TEXT_HEADER",
+      "FLASHY_TEXT"
+    },
+    .text = "SIGNALS CROSSED, A puzzle and memory game made in 72 hours, Made by August Karbowski, Music by Dan Jarosz, Press Enter to Play!",
+    .delimiter = ','
   },
-  {"PLAY_BTN", VECTOR2_ZERO, FIXED_BUTTON_SIZE, UI_BUTTON,
-    ELEMENT_NONE, 0, ALIGN_CENTER | ALIGN_MID,
+  {"TITLE_HEADER", VECTOR2_ZERO, VECTOR2_ZERO, UI_TITLE, ELEMENT_NONE,
+    LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    GetOwnerTextAt, ElementPresetContext,
     .cb = {
-      [ELEMENT_ACTIVATE] = UITransitionScreen
+      [ELEMENT_LOAD] = ElementSetContext,
+    }
+  },
+  {"TEXT_HEADER", VECTOR2_ZERO, VECTOR2_ZERO, UI_TEXT, ELEMENT_NONE,
+    LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    GetOwnerTextAt, ElementPresetContext,
+    .cb = {
+      [ELEMENT_LOAD] = ElementSetContext,
+    }
+  },
+  {"FLASHY_TEXT", VECTOR2_ZERO, VECTOR2_ZERO, UI_TEXT, ELEMENT_NONE,
+    LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    GetOwnerTextAt, ElementPresetContext,
+    .cb = {
+      [ELEMENT_LOAD] = ElementSetContext,
     },
-    .text = "PLAY"
+    {
+      [UI_MARGIN_BOT] = 16, [UI_MARGIN_TOP] = 32
+    }
   },
   {"HUD_MENU_DOM", VECTOR2_ZERO, VECTOR2_ZERO, UI_CONTAINER, ELEMENT_NONE, 
     LAYOUT_FREE, ALIGN_LEFT,

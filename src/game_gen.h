@@ -52,7 +52,8 @@ typedef struct {
     
 typedef struct map_cell_s map_cell_t;
 
-typedef void (*MapCellFn)(map_cell_t* mc, ent_t* e);
+typedef void (*MapCellFn)(map_grid_t*, map_cell_t* mc, ent_t* e);
+void MapCellOccupied(map_grid_t*, map_cell_t* mc, ent_t* e);
 
 struct map_cell_s{
   game_object_uid_i   gouid;
@@ -71,6 +72,7 @@ map_cell_t* InitMapCell(map_grid_t*, Tiles, Cell);
 struct map_grid_s{
   //MapID        id;
   map_cell_t   **tiles;
+  hash_map_t   hash;
   int          x,y,width,height;
   int          step_size;
   Color        floor;

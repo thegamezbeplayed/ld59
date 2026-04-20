@@ -360,26 +360,33 @@ typedef struct{
   DataType        type;
   int             state;
   StateComparator fn;
+  bool            targeted;
 }signal_condition_t;
 
 static signal_condition_t SIGCON[COND_ALL] = {
-  [COND_ENTER] = {DATA_EVENT, EVENT_ENTER_CELL, EQUAL_TO}
+  [COND_ENTER] = {DATA_EVENT, EVENT_ENTER_CELL, EQUAL_TO, true},
+  [COND_NEAR] = {DATA_EVENT, EVENT_TILE_DIST, EQUAL_TO, true}
 };
 
 typedef bool (*SignalAction)(param_t user, param_t other);
 typedef struct{
-  Signal        signal;
-  Signals       interacts;
-  Condition     condition;
-  SignalAction  action;
-  int           wait;
+  Signal            signal;
+  Signals           interacts;
+  Condition         condition;
+  SignalAction      action;
+  int               wait;
+  int               raw;
+  param_t           val;
+  game_object_uid_i user;
 }signal_interaction_d;
 
 void InitSignals(game_object_uid_i, Signals);
 bool ActionGlide(param_t user, param_t other);
+bool ActionRepel(param_t user, param_t other);
 
-static signal_interaction_d DEF_SIGINT[TILE_DONE] = {
+static signal_interaction_d SLAB_SIGINT[TILE_DONE] = {
   {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide,6},
+  {SIG_THURISAZ, SIG_NONE, COND_NEAR, ActionRepel,3, 1},
 };
 
 typedef struct{

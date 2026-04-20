@@ -6,7 +6,10 @@
 typedef enum{
   EVENT_TILE_COLLISION,
   EVENT_TILE_INSERT,
+  EVENT_TILE_MOVE,
+  EVENT_TILE_DIST,
   EVENT_SHIFT_SLAB,
+  EVENT_SIGNAL_ACTION,
   EVENT_TILE_END,
   EVENT_GAME_PROCESS,
   EVENT_INTERACTION,
@@ -23,8 +26,8 @@ typedef enum{
   EVENT_LEVEL_SHIFT,
   EVENT_LEVEL_CHECK,
   EVENT_LEVEL_SOLVED,
+  EVENT_LEVEL_CLEAR,
   EVENT_LEVEL_END,
-EVENT_SIGNAL_ACTION,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -149,7 +152,6 @@ typedef enum{
   SLAB_WUNJO,    
   SLAB_YR,       
   TILE_ANSUZ,    
-
   TILE_FEHU,     
   TILE_GEBO,     
   TILE_LAGUZ,    
@@ -159,7 +161,7 @@ typedef enum{
   TILE_THURISAZ, 
   TILE_URUZ,     
   TILE_YR,       
-
+  TILE_ISA,
   TILE_DONE
 }Tiles;
 
@@ -199,6 +201,7 @@ typedef enum{
 typedef enum{
   COND_NONE,
   COND_ENTER,
+  COND_NEAR,
   COND_ALL,
 }Condition;
 

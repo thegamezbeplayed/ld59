@@ -106,6 +106,8 @@ void InitMenuById(MenuId id){
       m.cb[i] = d.cb[i];
     else
       m.cb[i] = MenuInert;
+
+    m.key[i] = d.macro[i];
   }
 
   ui.menus[id] = m;
@@ -150,9 +152,6 @@ void InitUI(void){
   GuiSetStyle(LABEL, TEXT_PADDING, 3);
   GuiSetStyle(STATUSBAR, TEXT_PADDING, 1);
   GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, ColorToInt(WHITE));
-  for (int i = 0; i< MENU_DONE; i++)
-    ui.menu_key[i] = KEY_NULL;
-
 
   InitMenuById(MENU_MAIN);
   InitMenuById(MENU_HUD);
@@ -390,7 +389,7 @@ void ElementRender(ui_element_t* e){
     case UI_PANEL:
   
       strcpy(e->debug_text,e->name);
-      state = GuiPanel(e->bounds, e->text);
+      GuiPanel(e->bounds, e->text);
       break;
     case UI_LABEL:
       state = GuiLabel(e->bounds,e->text);
@@ -460,7 +459,6 @@ void ElementRender(ui_element_t* e){
       ElementSetState(e,ELEMENT_FOCUSED);
       break;
     case STATE_PRESSED:
-      if(ui.frame_lock < ui.current_frame)
         ElementSetState(e,ELEMENT_ACTIVATE);
       break;
     default:
@@ -493,17 +491,19 @@ void UISync(FetchRate poll){
   ui.current_frame = WorldGetTime();
   ui.frame_lock = ui.last_press_frame + 15;
   for(int i = 0; i < MENU_DONE; i++){
-    if(IsKeyPressed(ui.menu_key[i]))
-      MenuSetState(&ui.menus[i],MENU_OPENED);
+    ui_menu_t *m = &ui.menus[i];
+    for (int k = 0; k < MENU_END; k++){
+      if(IsKeyPressed(m->key[k]))
+        MenuSetState(m, k);
 
+    }
     UISyncMenu(&ui.menus[i], poll);
   }
-
   //UIRender();
 }
 
 void UISyncMenu(ui_menu_t* m, FetchRate poll){
-  if(m->state < MENU_ACTIVE)
+  if(m->state < MENU_READY)
     return;
 
   if(!m->element->menu )
@@ -754,6 +754,10 @@ bool ElementShowChildren(ui_element_t* e){
     ElementSetState(e->children[i], ELEMENT_SHOW);
 }
 
+bool MenuTransitionScreen(ui_menu_t* m){
+  GameTransitionScreen();
+}
+
 bool MenuActivateChildren(ui_menu_t* m){
   if(ElementSetState(m->element, ELEMENT_IDLE))
   ElementSetState(m->element, ELEMENT_SHOW);
@@ -778,7 +782,6 @@ void MenuOnStateChanged(ui_menu_t*m, MenuState old, MenuState s){
     case MENU_LOAD:
       MenuSetState(m, MENU_READY);
       break;
-    case MENU_ACTIVE:
     case MENU_READY:
     case MENU_OPENED:
       GuiSetState(STATE_NORMAL);
@@ -1019,6 +1022,16 @@ element_value_t* GetElementName(ui_element_t* e, param_t context){
   
 }
 
+element_value_t* GetContextParams(ui_element_t* e, param_t context){
+
+}
+
+bool ElementRestartLevel(ui_element_t* self){
+  WorldLevelReset(true);
+
+  return true;
+}
+
 element_value_t* GetOwnerValue(ui_element_t* e, param_t context){
   if(!e->owner || e->owner->value == NULL)
     return NULL;
@@ -1169,9 +1182,6 @@ param_t ElementGetOwnerContext(void* p){
   return c->owner->ctx;
 }
 
-
-
-
 int GuiTooltipControl(Rectangle bounds, const char* text){
     int result = 0;
     GuiState state = guiState;
@@ -1301,6 +1311,14 @@ param_t ElementIndexContext(void* p){
 
    return ParamMake(DATA_INT, sizeof(int), &e->index);
 
+}
+
+param_t ElementLevelContext(void*){
+  level_t* l = WorldGetLevel();
+  if(!l)
+    return EMPTY_PARAM;
+
+  return ParamMakeObj(DATA_LEVEL, l->id, l);
 }
 
 param_t ElementPresetContext(void* p){

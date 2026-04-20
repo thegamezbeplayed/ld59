@@ -42,6 +42,7 @@ static char* StringSplit(char* str, char delimiter){
 void StringBounds(Rectangle *b, char* buff);
 
 static const char* SIG_STR[TILE_DONE] = {
+  "EMPTY",
   "ALGIZ",
   "ANSUZ",
   "BERKANA",
@@ -67,6 +68,41 @@ static const char* SIG_STR[TILE_DONE] = {
   "URUZ",
   "WUNJO",
   "YR",
+  "ANSUZ",
+  "FEHU",
+  "GEBO",
+  "LAGUZ",
+  "MANNAZ",
+  "RAIDO",
+  "SOL",
+  "THURISAZ",
+  "URUZ",
+  "YR"
 
 };
+
+typedef struct{
+  const char   str[MAX_NAME_LEN];
+  int         weight;
+}announce_string_t;
+
+typedef struct{
+  int               count;
+  announce_string_t pool[10];
+  choice_pool_t     *picker;
+}announce_string_p;
+
+static  announce_string_p ANNOUNCE_STRINGS[EVENT_NONE] = {
+  [EVENT_LEVEL_STUCK] = { 5,
+    {
+      {"hmm.. that wasn't right", 10},
+      {"Lets try that again", 5},
+      {"I keep getting my signals crossed!", 6},
+      {"Next time.. for sure..", 4},
+      {"You must construct additional pylons", 1}
+    }
+  }
+};
+
+const char* StringGetAnnouncement(EventType type);
 #endif

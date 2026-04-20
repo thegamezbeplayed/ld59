@@ -22,11 +22,6 @@ typedef struct bounds_s {
   //BoundsCheckCall col_check;
 } bounds_t;
 
-typedef struct{
-  behavior_tree_node_t*   bt[STATE_END];
-}controller_t;
-controller_t* InitController();
-
 //===ENT_T===>
 struct ent_s{
   int                   uid;
@@ -34,7 +29,6 @@ struct ent_s{
   EntityType            type;
   Cell                  pos, old_pos, facing;
   EntityState           state;
-  controller_t          *control;
   sprite_t              *sprite;
   Signals               signals;
   SignalAction          action;  
@@ -58,8 +52,9 @@ bool FreeEnt(ent_t*);
 void EntRender(ent_t* e);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
+
+void EntCheckStatus(ent_t* e);
 bool CheckEntAvailable(ent_t* e);
-bool CheckEntPosition(ent_t* e, Vector2 pos);
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback);
 void StepState(ent_t *e);
 void OnStateChange(ent_t *e, EntityState old, EntityState s);

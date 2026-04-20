@@ -40,6 +40,7 @@
 #define RectInner(r,i) (Rectangle){(r.x+i),(r.y+i),(r.width-i),(r.height-i)}
 #define RectInc(r,xi,yi) ((Rectangle){ (r.x+xi), (r.y+yi),(r.width),(r.height) })
 #define RectScale(r,s) ((Rectangle){ (r.x), (r.y),(r.width * s),(r.height * s) })
+#define RECT(x,y,w,h) ((Rectangle){x,y,w,h})
 #define CELL_EMPTY (Cell){0,0}
 #define CELL_UNSET (Cell){-1,-1}
 #define CELL_ONE    (Cell){ 1, 1 }
@@ -64,6 +65,7 @@
 #define HKEY_CELL(c) (hash_key_t){hash_combine_64(\
     hash_64_from_int(c.x), hash_64_from_int(c.y))}
 
+typedef Rectangle Rect;
 typedef bool (*CompareFn)(int a, int b);
 
 void* GameCalloc(const char* func, int count, size_t size);
@@ -368,13 +370,16 @@ static bool CellListContains(CellList allowed, CellList compare){
 static inline int CELL_LEN(Cell c){
   return isqrt((c.x * c.x) + (c.y*c.y));
 }
-static inline int CellDistGrid(Cell c1,Cell c2){
-  return abs( c2.x-c1.x) + abs( c2.y-c1.y);
 
+// Manhattan distance (or switch to Euclidean easily)
+static inline int cell_distance_euc(Cell a, Cell b) {
+  float dx = a.x - b.x;
+  float dy = a.y - b.y;
+  return sqrtf(dx*dx + dy*dy);
 }
 
 // Manhattan distance (or switch to Euclidean easily)
-static inline int cell_distance(Cell a, Cell b) {
+static inline int cell_distance_man(Cell a, Cell b) {
     return abs(a.x - b.x) + abs(a.y - b.y);
 }
 
@@ -404,7 +409,7 @@ static inline bool cell_in_bounds(Cell c, Cell bounds){
   if (c.x >= bounds.x || c.x < 0)
     return false;
 
-  return (c.y <= bounds.y && c.x >= 0);
+  return (c.y < bounds.y && c.y >= 0);
 }
 
 static inline Cell cell_random_range(int min, int max){
@@ -449,8 +454,8 @@ static inline Cell cell_inc_rect(Cell c, Rectangle r){
 
   return CellInc(start, c);
 }
-
-static inline Cell cell_dir(Cell start, Cell end){
+//CARDINAL DIR (4 AXIS)
+static inline Cell cell_card_dir(Cell start, Cell end){
   int tx = end.x;
   int ty = end.y;
   int sx = start.x;
@@ -469,6 +474,12 @@ static inline Cell cell_dir(Cell start, Cell end){
   }
 
   return CELL_NEW(dx,dy);
+}
+//MOORE DI R (8 AXIS)
+static inline Cell cell_moore_dir(Cell start, Cell end) {
+  int dx = (end.x > start.x) - (end.x < start.x);
+  int dy = (end.y > start.y) - (end.y < start.y);
+  return CELL_NEW(dx, dy);
 }
 
 static bool is_adjacent(Cell c1, Cell c2)
@@ -638,6 +649,13 @@ static bool GetRectOverlap(Rectangle a, Rectangle b, Vector2 *overlap)
   }
 
   return result; // they overlap
+}
+
+static inline bool rect_contains_rect(Rect a, Rect b) {
+  return (b.x >= a.x) &&
+         (b.y >= a.y) &&
+         (b.x + b.width <= a.x + a.width) &&
+         (b.y + b.height <= a.y + a.height);
 }
 
 static void MakeTriangleFromRect(Rectangle r, Cell dir, Vector2 out[3]) {

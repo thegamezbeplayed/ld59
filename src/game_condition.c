@@ -53,7 +53,7 @@ void OnSignalEvent(event_t* ev, void* user){
   ent_t* e = p.data;
   e->action = sigint->action;
   e->action_param = other;
-  LevelScheduleEvent(EVENT_SIGNAL_ACTION, e, ev->iuid, TF_UPDATE, 9 ); 
+  LevelScheduleEvent(EVENT_SIGNAL_ACTION, e, ev->iuid, TF_UPDATE, sigint->wait ); 
 }
 
 void InitSignalEvent(game_object_uid_i gouid, signal_interaction_d* sint,
@@ -103,7 +103,14 @@ bool ActionGlide(param_t user, param_t other){
   int x = e->facing.x + e->pos.x;
   int y = e->facing.y + e->pos.y;
 
-  return EntGridStep(e, e->facing) < TILE_ISSUES;
+  bool out = false;
+  if(EntGridStep(e, e->facing) < TILE_ISSUES)
+    out = true;
+
+  map_cell_t* mc = MapGetTile(WorldGetMap(), e->pos);
+  LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 9);
+
+  return out;
 }
 
 
@@ -119,6 +126,11 @@ bool ActionRepel(param_t user, param_t other){
     return false;
 
 
-  Cell dir = cell_dir(e->pos, tar->pos);
-  return EntGridStep(tar, dir) < TILE_ISSUES;
+  Cell dir = cell_moore_dir(e->pos, tar->pos);
+  bool out = EntGridStep(tar, dir) < TILE_ISSUES;
+
+  map_cell_t* mc = MapGetTile(WorldGetMap(), tar->pos);
+  LevelScheduleEvent(EVENT_LEVEL_CHECK, tar, mc->gouid, TF_UPDATE, 9);
+
+  return out;
 }

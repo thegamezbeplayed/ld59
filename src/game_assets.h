@@ -11,6 +11,10 @@
 #define MAX_SPRITES 128
 #define MAX_LAYER_SPRITES 64
 
+
+#define FLOAT_TEXT_SIZE 54
+#define FLOAT_TEXT_SPACING 2
+
 typedef struct ent_s ent_t;
 typedef struct sprite_s sprite_t;
 
@@ -28,13 +32,14 @@ typedef struct sub_texture_s {
 } sub_texture_t;
 
 typedef struct{
-  const char* text;
+  char        text[MAX_NAME_LEN];
   Vector2     pos;
   int         size;
   Color       color;
   int         duration;
 }render_text_t;
 
+render_text_t* InitRenderText(const char*, Vector2, int, Color, int);
 void AddFloatingText(render_text_t *rt);
 
 void InitResources();
@@ -203,6 +208,7 @@ bool SpriteCanChangeState(sprite_t*, AnimSequence old, AnimSequence s);
 sprite_t* SpriteAnimate(sprite_t *spr);
 void SpriteAnimateTo(sprite_t *spr, Cell from, Cell to);
 void SpritePreprocessImg(Image *img, Texture2D* out);
+void DrawTextExOutlined(Font font, const char *text, Vector2 pos, float fontSize, float spacing, Color textColor, Color outlineColor);
 
 typedef struct{
   sprite_t*   s;

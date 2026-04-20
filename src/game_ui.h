@@ -45,14 +45,14 @@
 #define DEFAULT_LINE_SIZE (Vector2){2 *UI_SCALE, 64*UI_SCALE}
 #define FIXED_GRID_PANEL      (Vector2){124, 64}
 #define FIXED_CONTROL         (Vector2){160, 36}
-#define FIXED_BUTTON_SIZE     (Vector2){96, 24}
-#define FIXED_LABEL_SIZE      (Vector2){112, 18}
+#define FIXED_BUTTON_SIZE     (Vector2){96, 48}
+#define FIXED_LABEL_SIZE      (Vector2){128, 48}
 #define FIXED_VAL_LABEL_SIZE  (Vector2){80, 18}
 #define FIXED_HEADER_SIZE     (Vector2){144, 18}
 #define FIXED_BOX_SIZE        (Vector2){36, 36}
 #define FIXED_TOOL_TIP        (Vector2){96, 20}
 #define FIXED_TITLE_CHAR      (Vector2){32, 48}
-
+#define FIXED_SCREEN_SIZE     (Vector2){ROOM_WIDTH, 64}
 #define FIXED_DETAILS_BOX     (Vector2){264, 48}
 
 #define UI_PANEL_RIGHT (Vector2){1472, 0}
@@ -195,6 +195,8 @@ int GuiTooltipControl(Rectangle bounds, const char* text);
 
 typedef struct ui_element_s ui_element_t;
 typedef bool (*ElementCallback)( ui_element_t* self);
+bool ElementRestartLevel(ui_element_t* self);
+
 typedef enum {
   VAL_ICO,
   VAL_INT,
@@ -238,6 +240,7 @@ param_t ElementOwnerChildren(void*);
 param_t ElementNiblings(void *);
 param_t ElementOwnerTextAt(void*);
 param_t ElementPresetContext(void*);
+param_t ElementLevelContext(void*);
 param_t ElementIndexContext(void* p);
 
 typedef float (*EffectFn)(float t, float b, float c, float d);
@@ -333,9 +336,9 @@ struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
 element_value_t* GetOwnerValue(ui_element_t* e, param_t context);
+element_value_t* GetContextParams(ui_element_t* e, param_t context);
 element_value_t* GetOwnerText(ui_element_t* e, param_t context);
 element_value_t* GetOwnerTextAt(ui_element_t* e, param_t context);
-element_value_t* GetContextValueName(ui_element_t* e, param_t context);
 element_value_t* GetElementName(ui_element_t* e, param_t context);
 element_value_t* GetTitleScreen(ui_element_t* e, param_t context);
 
@@ -344,6 +347,7 @@ typedef struct ui_menu_s{
   int           process_id;
   ui_element_t  *element;
   MenuCallback  cb[MENU_END];
+  KeyboardKey   key[MENU_END];
   MenuState     state;
   bool          is_modal;
 }ui_menu_t;
@@ -354,6 +358,7 @@ typedef struct{
   MenuState     state;
   bool          is_modal;
   MenuCallback  cb[MENU_END];
+  KeyboardKey   macro[MENU_END];
 }ui_menu_d;
 extern ui_menu_d MENU_DATA[MENU_DONE];
 
@@ -371,7 +376,7 @@ void MenuOnStateChanged(ui_menu_t* m, MenuState old, MenuState s);
 static bool MenuInert(ui_menu_t* self){
   return false;
 }
-
+bool MenuTransitionScreen(ui_menu_t* m);
 bool MenuActivateChildren(ui_menu_t*);
 bool MenuProcessReady(ui_menu_t*);
 typedef struct{
@@ -380,7 +385,6 @@ typedef struct{
   float        title_size, title_spacing;
   Color        title_col;
   //MenuId      open_menu;
-  KeyboardKey  menu_key[MENU_DONE];
   ui_menu_t    menus[MENU_DONE];
   int          layer_base, layer_top;
   int          last_press_frame, current_frame, frame_lock;

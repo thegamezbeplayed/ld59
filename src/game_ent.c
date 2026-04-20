@@ -17,7 +17,6 @@ ent_t* InitEnt(EntityType t){
   e->type = t;
   e->sprite = InitAnimationByID(def.anims, def.base, SHEET_CHAR);
   e->sprite->owner = e;
-  e->control = InitController();
   SetState(e,STATE_SPAWN,NULL);
   return e;
 }
@@ -28,7 +27,6 @@ ent_t* InitEntStatic(EntityType t, Tiles r){
   e->type = t;
   e->sprite = InitSpriteByID(r, SHEET_TILE);
   e->sprite->owner = e;
-  e->control = InitController();
   e->signals = TILE_SIGNALS[r];
   SetState(e,STATE_SPAWN,NULL);
 
@@ -39,12 +37,11 @@ void EntDestroy(ent_t* e){
   if(!e || !SetState(e, STATE_END,NULL))
     return;
 
+  WorldRemoveEnt(e->gouid);
   if(e->sprite!=NULL){
-    e->sprite->owner = NULL;
     e->sprite->is_visible = false;
+    e->sprite->owner = NULL;
   }
-
-  e->control = NULL;
 }
 
 bool FreeEnt(ent_t* e){
@@ -55,17 +52,7 @@ bool FreeEnt(ent_t* e){
   return true;
 }
 
-controller_t* InitController(){
-  controller_t* ctrl = malloc(sizeof(controller_t));
-  *ctrl = (controller_t){0};
-
-  return ctrl;
-}
-
 void EntSync(ent_t* e){
-  if(e->control)  
-    EntControlStep(e);
-
   SpriteSync(e, e->sprite);
 }
 /*
@@ -76,14 +63,6 @@ void EntRender(ent_t* e){
     DrawSprite(e->sprite);
 }
 */
-void EntControlStep(ent_t *e){
-  if(!e->control || !e->control->bt || !e->control->bt[e->state])
-    return;
-
-  behavior_tree_node_t* current = e->control->bt[e->state];
-
-  current->tick(current, e);
-}
 
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
   if(CanChangeState(e->state,s)){
@@ -117,14 +96,21 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(s){
     case STATE_DIE:
       EntDestroy(e);
-      LevelEvent(EVENT_ENT_DIE, e, e->gouid);
+      LevelScheduleEvent(EVENT_ENT_DIE, e, e->gouid, TF_TURN, 1);
       break;
     default:
       break;
   }
-}
 
-bool CheckEntPosition(ent_t* e, Vector2 pos){
+  switch(old){
+    case STATE_SHIFTING:
+      map_cell_t* mc = MapGetTile(WorldGetMap(), e->pos);
+      LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 12);
+      
+      break;
+    default:
+      break;
+  }
 }
 
 bool CheckEntAvailable(ent_t* e){
@@ -134,6 +120,13 @@ bool CheckEntAvailable(ent_t* e){
   return (e->state < STATE_DIE);
 }
 
+void EntCheckStatus(ent_t* e){
+  if(MapCheckMoveOptions(WorldGetMap(), e) < TILE_ISSUES)
+    return;
+
+  TraceLog(LOG_INFO, "STUCK %i", e->uid);
+  SetState(e, STATE_STUCK, NULL);
+}
 
 TileStatus EntGridStep(ent_t *e, Cell step){
   Cell newPos = CellInc(e->pos,step);
@@ -163,13 +156,12 @@ void OnShiftEvent(event_t* e, void* user){
   if(p->state != STATE_PUSHING || slab->state != STATE_SHIFTING)
     return;
 
-  SetState(slab, STATE_IDLE, NULL);
-  SetState(p, STATE_IDLE, NULL);
-  if(EntGridStep(slab, p->facing) >= TILE_ISSUES)
-    return;
+  if(EntGridStep(slab, p->facing) < TILE_ISSUES)
+    if(EntGridStep( p, p->facing) < TILE_ISSUES)
+      LevelEvent(EVENT_LEVEL_SHIFT, slab, p->gouid);
 
-  if(EntGridStep( p, p->facing) < TILE_ISSUES)
-    LevelEvent(EVENT_LEVEL_SHIFT, slab, p->gouid);
+  SetState(p, STATE_IDLE, NULL);
+  SetState(slab, STATE_IDLE, NULL);
 }
 
 void OnStaticCollide( event_t* e, void* user){

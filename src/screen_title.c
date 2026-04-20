@@ -5,7 +5,7 @@
 // Title Screen Initialization logic
 void InitTitleScreen(void)
 {
-  MenuSetState(&ui.menus[MENU_MAIN],MENU_ACTIVE);
+  MenuSetState(&ui.menus[MENU_MAIN],MENU_READY);
 }
 
 // Title Screen Update logic

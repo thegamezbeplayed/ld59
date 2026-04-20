@@ -53,10 +53,6 @@ int main(void)
   while (!WindowShouldClose() && !wantQuit)    // Detect window close button or ESC key
   {
     bool wait = true;
-    if (IsKeyPressed(KEY_ENTER))// || IsGestureDetected(GESTURE_TAP))
-    {
-      GameTransitionScreen();
-    }
 
     currentTime = GetTime();
     updateDrawTime = currentTime - previousTime;

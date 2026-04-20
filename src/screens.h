@@ -11,24 +11,35 @@
 #define DESIGN_HEIGHT 1200.0f
 //#endif
 
+
+#define ROOM_WIDTH 900
+#define ROOM_HEIGHT 900
+
+#define ROOM_SIZE (Vector2){ROOM_WIDTH, ROOM_HEIGHT}
+
+
 static float SPRITE_SCALE = 1.0f;
 static float UI_SCALE = 1.0f;
 
 typedef struct{
   Camera2D        *camera;
-  Cell            size,pos,target;
+  Cell            size,pos,target, offset;
   Rectangle       view,bounds;
+  Rectangle       play_area, show_area;
   bool            mode;
   RenderTexture2D render;
 }camera_t;
-
+extern camera_t* cam;
 void InitCamera(float zoom, float rot, Vector2 offset, Vector2 target);
 void ScreenCameraSync(Cell target);
 void ScreenCameraToggle(void);
 bool ScreenCameraSetView(Cell v);
 void ScreenCameraSetBounds(Cell b);
 Rectangle ScreenGetCameraView(void);
-void ScreenRender(void);
+void ScreenRender(Color);
+static void ScreenSetOffset(Cell c){
+  cam->offset = c;
+}
 
 typedef struct{
   bool    is_dragging;

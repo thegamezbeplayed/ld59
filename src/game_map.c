@@ -31,6 +31,7 @@ map_grid_t* InitMapGrid(level_t* l){
   m->height = ld.hei;
   m->floor = DARKBROWN;
 
+  ScreenSetOffset(CELL_NEW(ld.wid * 4, ld.hei/2));
   int area = ld.wid * ld.hei;
   HashInit(&m->hash, next_pow2_int(1+area));
   m->tiles = GameMalloc("InitMapGrid", m->width * sizeof(map_cell_t*));
@@ -199,13 +200,12 @@ void MapCellOccupied(map_grid_t* m, map_cell_t* mc, ent_t* e){
   hash_slot_t* s;
   while((s = HashNext(&iter))){
     map_cell_t* other = s->value;
-    int dist = cell_distance(other->coords, mc->coords);
+    int dist = cell_distance_euc(other->coords, mc->coords);
 
     param_t p = ParamMake(DATA_INT, sizeof(int), &dist);
     LevelEventPayload(EVENT_TILE_DIST, other, mc->occupant->gouid, p);
   }
     LevelTargetSubscribe(EVENT_ENT_DIE, OnMapCellEvent, mc, e->gouid);
-  LevelEvent(EVENT_LEVEL_CHECK, e, mc->gouid);
 }
 
 map_cell_t* MapGetTile(map_grid_t* map,Cell tile){
@@ -248,3 +248,18 @@ ent_t* MapGetOccupant(map_grid_t* m, Cell c, TileStatus* status){
   return tile.occupant;
 }
 
+TileStatus MapCheckMoveOptions(map_grid_t* m, ent_t* e){
+  Cell corners[4];
+  corners[0] = CELL_EMPTY;
+  corners[1] = CELL_NEW(0, m->height -1) ;
+  corners[0] = CELL_NEW(m->width - 1, 0);
+  corners[0] = CELL_NEW(m->width-1, m->height -1);
+  for (int i = 0; i < 4; i++){
+    Cell corner = corners[i];
+
+    if(cell_compare(e->pos, corner))
+      return TILE_BORDER;
+  }
+
+  return TILE_SUCCESS;
+}

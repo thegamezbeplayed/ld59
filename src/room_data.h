@@ -1,9 +1,6 @@
 #ifndef ROOM_DATA_H
 #define ROOM_DATA_H
 
-#define ROOM_WIDTH 900
-#define ROOM_HEIGHT 900
-
 #define ROOM_LEVEL_COUNT 3
 
 typedef struct{
@@ -15,20 +12,20 @@ typedef struct{
 
 static level_layout_t LVLS[LVL_ALL] = {
   {
-    6, 6,
+    5, 5,
     {4,3},
     .tiles = {
-      [5][0]    = TILE_URUZ,
-      [0][5]  = TILE_FEHU
+      [4][0]    = TILE_URUZ,
+      [0][4]  = TILE_FEHU
     },
     .slabs = {
-      [4][1]  = SLAB_FEHU,
+      [3][1]  = SLAB_FEHU,
       [1][2] = SLAB_URUZ, 
     }
   },
   {
-    8,8,
-    {3,6},
+    8,5,
+    {3,3},
     .tiles = {
       [5][0] = TILE_VOID,
       [5][1] = TILE_VOID,
@@ -36,68 +33,47 @@ static level_layout_t LVLS[LVL_ALL] = {
       [5][3] = TILE_VOID,
       [5][4] = TILE_VOID,
       [5][5] = TILE_VOID,
-      [5][6] = TILE_VOID,
-      [5][7] = TILE_VOID,
-      [5][8] = TILE_VOID,
-      [5][9] = TILE_VOID,
       [1][1] = TILE_LAGUZ,
-      [7][7] = TILE_SOL,
+      [6][1] = TILE_SOL,
     },
     .slabs = {
       [4][3] = SLAB_SOL,
       [2][2] = SLAB_LAGUZ,
-      [6][5] = SLAB_LAGUZ,
+      [6][3] = SLAB_LAGUZ,
     }
   },
   {
-    10, 10,
-    {5,4},
+    5, 8,
+    {0,4},
     .tiles = {
-      [3][3] = TILE_ISA,
+      [3][5] = TILE_ISA,
     },
     .slabs = {
-      [3][2] = SLAB_ISA,
-      [5][5] = SLAB_URUZ,
-      [7][7] = SLAB_THURISAZ
+      [3][4] = SLAB_ISA,
+      [1][3] = SLAB_URUZ,
+      [3][1] = SLAB_THURISAZ
     }
   },
   {
-    12, 10,
+    8, 8,
     {3, 1},
     .tiles = {
-      [7][0] = TILE_VOID,
-      [7][1] = TILE_VOID,
-      [7][2] = TILE_VOID,
-      [7][3] = TILE_VOID,
-      [7][4] = TILE_VOID,
-      [7][5] = TILE_VOID,
-      [7][6] = TILE_VOID,
-      [7][7] = TILE_VOID,
-      [7][8] = TILE_VOID,
-      [7][9] = TILE_VOID,
-      [0][4] = TILE_VOID,
-      [1][4] = TILE_VOID,
-      [2][4] = TILE_VOID,
-      [3][4] = TILE_VOID,
-      [4][4] = TILE_VOID,
-      [5][4] = TILE_VOID,
-      [6][4] = TILE_VOID,
-      [8][4] = TILE_VOID,
-      [9][4] = TILE_VOID,
-      [10][4] = TILE_VOID,
-      [11][4] = TILE_VOID,
+      [1][1] = TILE_THURISAZ,
+      [4][7] = TILE_ANSUZ,
+      [0][7] = TILE_VOID,
+      [1][6] = TILE_VOID,
+      [2][5] = TILE_VOID,
+      [3][5] = TILE_VOID,
+      [4][5] = TILE_VOID,
+      [4][6] = TILE_VOID,
+      [5][6] = TILE_VOID,
+      [5][7] = TILE_VOID,
     },
     .slabs = {
       [2][2] = SLAB_ANSUZ,
-      [3][2] = SLAB_GEBO
+      [3][2] = SLAB_THURISAZ
     }
   }  
 };
 
-static const BehaviorData room_behaviors[BN_COUNT] = {
-  {BN_NONE} ,
-  {BN_CHANGE_STATE, false, BT_LEAF,LeafChangeState},
-  {BN_CHECK_SIGNAL, false, BT_LEAF, LeafCheckSignal},
-  {BN_GET_COND,     false, BT_LEAF, LeafGetConditions},
-};
 #endif

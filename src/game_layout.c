@@ -30,6 +30,7 @@ float ElementGetWidthSum(ui_element_t *e){
   int wid = ElementGetWidthSum(e->children[i]);
     switch(e->layout){
       case LAYOUT_HORIZONTAL:
+        break;
       case LAYOUT_GRID:
         cwidth += ElementGetWidthSum(e->children[i]);
         break;

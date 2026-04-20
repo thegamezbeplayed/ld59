@@ -260,101 +260,11 @@ bool CheckEvent(events_t* pool, EventType type);
 //<===BEHAVIOR TREES
 
 //forward declare
-struct behavior_tree_node_s;
-
-struct behavior_tree_node_s *BehaviorGetTree( BehaviorID id);
-
 typedef enum{
   BEHAVIOR_SUCCESS,
   BEHAVIOR_FAILURE,
   BEHAVIOR_RUNNING
 }BehaviorStatus;
-
-typedef enum{
-  BT_LEAF,
-  BT_SEQUENCE,
-  BT_SELECTOR,
-  BT_CONCURRENT
-}BehaviorTreeType;
-
-typedef struct {
-  BehaviorID           id;
-  struct behavior_tree_node_s *root;
-} TreeCacheEntry;
-
-extern TreeCacheEntry tree_cache[18];
-extern int tree_cache_count;
-
-static struct behavior_tree_node_s* BehaviorFindLeafFactory(const char *name);
-
-typedef BehaviorStatus (*BehaviorTreeTickFunc)(struct behavior_tree_node_s* self, void* context);
-
-typedef struct behavior_params_s{
-  struct ent_s*         owner;
-  EntityState           state;
-}behavior_params_t;
-
-struct behavior_tree_node_s *BuildTreeNode(BehaviorID id, behavior_params_t* parent_params);
-
-typedef struct behavior_tree_node_s{
-  BehaviorTreeType      bt_type;
-  BehaviorTreeTickFunc  tick;
-  void*                 data;
-}behavior_tree_node_t;
-
-typedef struct{
-  behavior_tree_node_t  **children;
-  int                   num_children;
-  int                   current;
-}behavior_tree_sequence_t;
-
-typedef struct{
-  behavior_tree_node_t  **children;
-  int                   num_children;
-  int                   current;
-}behavior_tree_selector_t;
-
-typedef BehaviorStatus (*BehaviorTreeLeafFunc)(behavior_params_t* params);
-
-typedef struct{
-  BehaviorTreeLeafFunc  action;
-  behavior_params_t*    params;
-}behavior_tree_leaf_t;
-
-typedef struct {
-    const char *name;  // "CanSeeTarget", "MoveToTarget", ...
-    behavior_tree_node_t* (*factory)(behavior_params_t *params); // params is leaf-specific (can be NULL)
-} BTLeafRegistryEntry;
-
-behavior_tree_node_t* InitBehaviorTree( BehaviorID id);
-void FreeBehaviorTree(behavior_tree_node_t* node);
-BehaviorStatus BehaviorTickSequence(behavior_tree_node_t *self, void *context);
-BehaviorStatus BehaviorTickSelector(behavior_tree_node_t *self, void *context);
-BehaviorStatus BehaviorTickConcurrent(behavior_tree_node_t *self, void *context);
-behavior_tree_node_t* BehaviorCreateLeaf(BehaviorTreeLeafFunc fn, behavior_params_t* params);
-behavior_tree_node_t* BehaviorCreateSequence(behavior_tree_node_t **children, int count);
-behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, int count);
-behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count);
-
-BehaviorStatus BehaviorChangeState(behavior_params_t *params);
-static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
-
-BehaviorStatus BehaviorGetConditions(behavior_params_t *params);
-static inline behavior_tree_node_t* LeafGetConditions(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorGetConditions,params); }
-
-BehaviorStatus BehaviorCheckSignal(behavior_params_t *params);
-static inline behavior_tree_node_t* LeafCheckSignal(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckSignal,params); }
-
-typedef struct {
-  BehaviorID           id;
-  bool                 is_root;
-  BehaviorTreeType     bt_type;
-  behavior_tree_node_t *(*func)(behavior_params_t *);
-  bool          param_overide;
-  EntityState   state;
-  int           num_children;
-  BehaviorID   children[5];
-} BehaviorData;
 
 typedef struct{
   DataType        type;
@@ -385,7 +295,7 @@ bool ActionGlide(param_t user, param_t other);
 bool ActionRepel(param_t user, param_t other);
 
 static signal_interaction_d SLAB_SIGINT[TILE_DONE] = {
-  {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide,6},
+  {SIG_ISA, SIG_NONE, COND_ENTER, ActionGlide, 12},
   {SIG_THURISAZ, SIG_NONE, COND_NEAR, ActionRepel,3, 1},
 };
 
@@ -396,4 +306,48 @@ typedef struct{
 extern signal_pool_t SigPool;
 void RegisterSignals(void);
 signal_interaction_d* SignalsGetEntry(Signal);
+
+typedef struct choice_s choice_t;
+typedef struct choice_pool_s choice_pool_t;
+typedef void (*OnChosen)(choice_pool_t* pool, choice_t* self);
+  
+void DiscardChoice(choice_pool_t* pool, choice_t* self);
+
+typedef choice_t* (*ChoiceFn)(choice_pool_t *pool);
+choice_t* ChooseByWeight(choice_pool_t* pool);
+void ChoiceReduceScore(choice_pool_t* pool, choice_t* self);
+  
+struct choice_s{
+  unsigned int id, cat;
+  int          score, orig_score, cost;
+  void*        context;
+  uint64_t     flags;
+  OnChosen     cb;
+};
+  
+choice_t* ChoiceById(choice_pool_t* pool, int id);
+  
+struct choice_pool_s{
+  unsigned int  id;
+  int           cap, desired, count,budget, total;
+  uint64_t      flags;
+  ChoiceFn      choose;
+  choice_t      *choices;
+};
+
+static void ShuffleChoices(choice_pool_t* pool){
+  for (int i = pool->count - 1; i > 0; i--) {
+    int j = rand() % (i + 1);
+
+    choice_t tmp = pool->choices[i];
+    pool->choices[i] = pool->choices[j];
+    pool->choices[j] = tmp;
+  }
+}
+
+choice_pool_t* StartChoice(choice_pool_t** pool, int size, ChoiceFn fn, bool* result);
+void EndChoice(choice_pool_t* pool, bool reset);
+choice_pool_t* InitChoicePool(int size, ChoiceFn fn);
+bool AddChoice(choice_pool_t *pool, int id, int score, void *ctx, OnChosen fn);  
+
 #endif

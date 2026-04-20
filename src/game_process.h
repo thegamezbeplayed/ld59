@@ -98,11 +98,17 @@ typedef struct{
   map_cell_t*   slot;
   Signals       solution;
   SolveStatus   status;
+}puzzle_t;
+
+typedef struct{
+  game_object_uid_i  gouid;
+  Signals            has;
 }solution_t;
 
 typedef struct{
-  int         cap, count, solved;
-  solution_t  *entries;
+  int         cap, count, solved, need, have;
+  solution_t  *pieces;
+  puzzle_t   *entries;
   SolveStatus completion;
 }stage_puzzle_t;
 
@@ -113,6 +119,7 @@ struct level_s{
   event_bus_t     *events;
   stage_puzzle_t* puzzle;
   map_grid_t*     map;
+  param_t         params[PARAM_ENT];
 };
 level_t* InitLevel(Levels id);
 void LevelReady(level_t* l);
@@ -130,6 +137,7 @@ typedef struct{
   unsigned int    num_ents;
 }world_data_t;
 
+void WorldAnnounce(EventType, Vector2 pos);
 typedef struct world_s{
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
@@ -141,11 +149,12 @@ typedef struct world_s{
   event_bus_t   *events;
 } world_t;
 extern world_t world;
+void Subscribe(EventType event, EventCallback cb, void* data);
+void ScheduleEvent(EventType type, void* data, uint64_t uid, TimeFrame, int);
 void OnWorldEvent(event_t *e, void* user);
 ent_t* WorldPlayer(void);
 param_t WorldGetParam(DataType type, hash_key_t key);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
-bool RegisterBehaviorTree(BehaviorData data);
 game_object_uid_i RegisterEnt( ent_t *e, Cell pos);
 game_object_uid_i RegisterMapCell(map_cell_t*);
 void WorldInitOnce();
@@ -191,5 +200,10 @@ static void CooldownEmit(payload_t* pl){
 
 map_cell_t* WorldGetTile(hash_key_t key);
 ent_t* WorldGetEnt(hash_key_t key);
+void WorldRemoveEnt(hash_key_t key);
+
+void WorldLevelReset(bool);
+
+
 #endif
 

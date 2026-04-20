@@ -6,11 +6,10 @@
 #include "game_utils.h"
 #include "game_ui.h"
 #include "game_control.h"
+#include "game_strings.h"
 
 world_t world;
 game_process_t game_process;
-TreeCacheEntry tree_cache[18] = {0};
-int tree_cache_count = 0;
 ent_t* player = NULL;
 
 void Subscribe(EventType event, EventCallback cb, void* data){
@@ -63,6 +62,30 @@ void GameSetState(GameState state){
   game_process.state[SCREEN_GAMEPLAY] = state;
 }
 
+void WorldLevelReset(bool restart){
+  int stage = restart? world.stage : world.stage+1;
+  world.num_ent = 0;
+
+  HashClear(&world.ent_map);
+  HashClear(&world.tile_map);
+
+  HashInit(&world.ent_map, MAX_ENTS * 2);
+  HashInit(&world.tile_map, MAX_CELLS * 2);
+
+
+  AssetReset();
+  GameFree("WorldReset", world.levels[world.stage]->events);
+  UnloadEvents( game_process.events);
+  world.stage = stage;
+  world.levels[world.stage] = InitLevel(stage);
+  LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[stage]);
+  game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
+  LevelReady(WorldGetLevel());
+
+  if(!restart)
+  Subscribe(EVENT_LEVEL_STUCK, OnWorldEvent, world.levels[stage]);
+}
+
 void OnWorldEvent(event_t *e, void* user){
   level_t* l = e->data;
 
@@ -73,23 +96,10 @@ void OnWorldEvent(event_t *e, void* user){
       //l->events->count = 0;
       break;
     case EVENT_LEVEL_CLEAR:
-      world.num_ent = 0;
-
-      HashClear(&world.ent_map);
-      HashClear(&world.tile_map);
-
-      HashInit(&world.ent_map, MAX_ENTS * 2);
-      HashInit(&world.tile_map, MAX_CELLS * 2);
-
-
-      AssetReset();
-      GameFree("WorldReset", world.levels[world.stage]->events);
-      UnloadEvents( game_process.events);
-      world.levels[world.stage] = InitLevel(++world.stage);
-      LevelSubscribe(EVENT_LEVEL_END, OnWorldEvent, world.levels[world.stage]);
-      game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
-      LevelReady(WorldGetLevel());
-
+      WorldLevelReset(false);
+      break;
+    case EVENT_LEVEL_STUCK:
+      WorldLevelReset(true);
       break;
   }
 }
@@ -104,9 +114,26 @@ void GameReady(){
   Subscribe(EVENT_LEVEL_CLEAR, OnWorldEvent, world.levels[0]);
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
   game_process.children[SCREEN_GAMEPLAY].state[PROCESS_LEVEL] = GAME_READY;
+  Subscribe(EVENT_LEVEL_STUCK, OnWorldEvent, world.levels[0]);
+
 }
 
+render_text_t* InitRenderText(const char* text, Vector2 pos,
+    int size, Color col, int dur){
 
+  render_text_t* rt = GameCalloc("IntRenderText", 1, sizeof(render_text_t));
+
+  *rt = (render_text_t){
+    .pos = pos,
+    .size = size,
+    .color = col,
+    .duration = dur
+  };
+
+  strcpy(rt->text, text);
+
+  return rt;
+}
 void AddFloatingText(render_text_t *rt){
   for (int i = 0; i < MAX_EVENTS; i++){
     if(world.floatytext_used[i])
@@ -118,6 +145,10 @@ void AddFloatingText(render_text_t *rt){
   }
 }
 
+void WorldAnnounce(EventType type, Vector2 pos){
+   render_text_t* rt = InitRenderText(StringGetAnnouncement(type), pos, 14, BLUE, 48);
+   AddFloatingText(rt);
+}
 
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params){
   int num_results = 0;
@@ -132,21 +163,13 @@ int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params){
   return num_results;
 }
 
-bool RegisterBehaviorTree(BehaviorData data){
-  TreeCacheEntry entry = {0};
-  entry.id = data.id;
-  entry.root = BuildTreeNode(data.id,NULL);
-  tree_cache[tree_cache_count++] = entry;
-
-  return entry.root!=NULL;
-}
-
 int RemoveEnt(int index){
   int last_pos = world.num_ent -1;
 
+  /*
   if(!FreeEnt(world.ents[index]))
     return 0;
-
+*/
   world.num_ent--;
   if(index!=last_pos){
     world.ents[index] = world.ents[last_pos];
@@ -264,14 +287,17 @@ void WorldRender(){
   MapRender(l->map);
   
   AssetRender();
+
+  for(int i = 0; i < MAX_EVENTS; i++){
+    if(!world.floatytext_used[i])
+      continue;
+    render_text_t rt = *world.texts[i];
+    DrawTextExOutlined(ui.font,rt.text, rt.pos,rt.size,FLOAT_TEXT_SPACING,rt.color,BLACK);
+  }
+
 }
 
 void InitGameProcess(){
-  for(int i = 0; i < BN_COUNT; i++){
-    if(room_behaviors[i].is_root)
-      RegisterBehaviorTree(room_behaviors[i]);
-  }
-
   for(int s = 0; s<SCREEN_DONE; s++){
     game_process.album_id[s] = -1;
     for(int u = 0; u<UPDATE_DONE;u++){
@@ -401,7 +427,11 @@ map_cell_t* WorldGetTile(hash_key_t key){
 ent_t* WorldGetEnt(hash_key_t key){
   return HashGet(&world.ent_map, key);
 } 
-  
+
+void WorldRemoveEnt(hash_key_t key){
+  HashRemove(&world.ent_map, key);
+}
+
 param_t WorldGetParam(DataType type, hash_key_t key){
   param_t p = EMPTY_PARAM;
 
@@ -420,5 +450,3 @@ param_t WorldGetParam(DataType type, hash_key_t key){
 
   return p;
 }
-
-

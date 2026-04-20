@@ -246,7 +246,7 @@ void SpriteSetOwnerGrid(ent_t* e, sprite_t* s){
 }
 
 void SpriteAnimateTo(sprite_t *spr, Cell from, Cell to){
-  Cell dir = cell_dir(from, to);
+  Cell dir = cell_card_dir(from, to);
 
   int grid_index = IntGridIndex(dir.x, dir.y);
   
@@ -280,6 +280,20 @@ void SpriteAnimateTo(sprite_t *spr, Cell from, Cell to){
   spr->anim->anims[seq]->on_complete = SpriteSetOwnerGrid;
   
 }
+
+void DrawTextExOutlined(Font font, const char *text, Vector2 pos, float fontSize, float spacing, Color textColor, Color outlineColor) {
+    float outline = 2;
+
+    for (int y = -outline; y <= outline; y++) {
+        for (int x = -outline; x <= outline; x++) {
+            if (x == 0 && y == 0) continue;
+            DrawTextEx(font, text, (Vector2){pos.x + x, pos.y + y}, fontSize, spacing, outlineColor);
+        }
+    } 
+    
+    DrawTextEx(font, text, pos, fontSize, spacing, textColor);
+}
+
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot){
   sprite_slice_t* slice = spr->slice; 

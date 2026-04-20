@@ -28,6 +28,7 @@ typedef enum{
   EVENT_LEVEL_SOLVED,
   EVENT_LEVEL_CLEAR,
   EVENT_LEVEL_END,
+  EVENT_LEVEL_STUCK,
   EVENT_NONE,
   MAX_EVENTS,
 } EventType;
@@ -46,21 +47,18 @@ typedef enum{
   STATE_PUSHING,
   STATE_SHIFTING,
   STATE_PLACED,
+  STATE_SOLVED,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
-  STATE_END//sentinel entity state should never be this or greater
+  STATE_END,//sentinel entity state should never be this or greater
+  STATE_STUCK
 }EntityState;
 
 typedef enum{
-  BN_NONE,
-  BN_CHANGE_STATE,
-  BN_CHECK_SIGNAL,
-  BN_GET_COND,
-  BN_SIGNAL,
-  BN_COUNT
-}BehaviorID;
-
-typedef enum{
   PARAM_NONE,
+  PARAM_TURN,
+  PARAM_SCORE,
+  PARAM_LEVEL,
+  PARAM_ENT,
   PARAM_POS,
   PARAM_NAME,
   PARAM_STATE,
@@ -208,6 +206,7 @@ typedef enum{
 typedef enum{
   SOLV_NO,
   SOLV_TRUE,
+  SOLV_STUCK,
   SOLV_END,
 }SolveStatus;
 #endif

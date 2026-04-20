@@ -161,6 +161,7 @@ void GameFree(const char* func, void* ptr){
   //TraceLog(LOG_INFO, "%s is freeing %zu\n TOTAL SIZE %.2f MB (%.2f GB)\n", func, size, mb, gb);
 
   free(raw);
+
 }
 
 void* GameRealloc(const char* func, void* ptr, size_t new_size)

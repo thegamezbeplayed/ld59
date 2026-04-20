@@ -93,7 +93,7 @@ static Signals TILE_SIGNALS[TILE_DONE] = {
   [TILE_THURISAZ] = SIG_THURISAZ,
   [TILE_URUZ]     = SIG_URUZ,
   [TILE_YR]       = SIG_YR,
-
+  [TILE_ISA]      = SIG_ISA
 };
 #endif
 

@@ -2,9 +2,9 @@
 #include "game_control.h"
 #include "game_helpers.h"
 
-solution_t* PuzzleGetEntry(stage_puzzle_t* p, game_object_uid_i gouid){
+puzzle_t* PuzzleGetEntry(stage_puzzle_t* p, game_object_uid_i gouid){
   for(int i = 0; i < p->count; i++){
-    solution_t* s = &p->entries[i];
+    puzzle_t* s = &p->entries[i];
     if(s->slot->gouid == gouid)
       return s;
   }
@@ -12,25 +12,27 @@ solution_t* PuzzleGetEntry(stage_puzzle_t* p, game_object_uid_i gouid){
   return NULL;
 }
 
-void PuzzleSetStatus(stage_puzzle_t* p, solution_t* s, SolveStatus status){
+void PuzzleSetStatus(stage_puzzle_t* p, puzzle_t* s, SolveStatus status){
   switch(status){
     case SOLV_TRUE:
       LevelEvent(EVENT_LEVEL_SOLVED, WorldGetLevel(), s->slot->gouid);
+      break;
   }
 }
 
-void OnSolutionStatus(stage_puzzle_t* p, solution_t* s, SolveStatus status){
+void OnSolutionStatus(stage_puzzle_t* p, puzzle_t* s, SolveStatus status){
 
   switch(status){
     case SOLV_TRUE:
       p->solved++;
+      p->need--;
       if(p->solved >= p->count)
         PuzzleSetStatus(p, s, SOLV_TRUE);
       break;
   }
 }
 
-bool SolutionSetStatus(solution_t* s, SolveStatus status){
+bool SolutionSetStatus(puzzle_t* s, SolveStatus status){
   if(s->status == status)
     return false;
 
@@ -39,8 +41,50 @@ bool SolutionSetStatus(solution_t* s, SolveStatus status){
   return true;
 }
 
+void PuzzleCheckStatus(stage_puzzle_t* p){
+  if(p->completion > SOLV_NO)
+    return;
+
+  Signals needed = SIG_NONE;
+
+  for(int i = 0; i < p->count; i++){
+    puzzle_t* pz = &p->entries[i];
+
+    if(pz->status == SOLV_TRUE)
+      continue;
+
+    needed |= pz->solution;
+  }
+
+  if(needed == SIG_NONE){
+    TraceLog(LOG_WARNING, "solved?");
+    return;
+  }
+
+  int still_have = 0;
+  for(int i = 0; i < p->have; i++){
+    solution_t* s = &p->pieces[i];
+
+    ent_t* e = WorldGetEnt(s->gouid);
+    if(!e || e->state > STATE_PLACED)
+      continue;
+
+    if((needed & e->signals) == 0)
+      continue;
+    still_have++;
+    needed &= ~e->signals;
+
+  }
+
+  if(still_have < p->need || needed > SIG_NONE){
+    p->completion = SOLV_STUCK;
+    WorldAnnounce(EVENT_LEVEL_STUCK, player->sprite->pos);
+    ScheduleEvent(EVENT_LEVEL_STUCK, p, p->need, TF_UPDATE, 36);
+  }
+}
+
 void PuzzleUpdateSolution(stage_puzzle_t* p, map_cell_t* mc, SolveStatus status){
-  solution_t* s = PuzzleGetEntry(p, mc->gouid);
+  puzzle_t* s = PuzzleGetEntry(p, mc->gouid);
 
   if(!s)
     return;
@@ -55,8 +99,10 @@ SolveStatus LevelCheckSolution(map_cell_t* mc, ent_t* e){
   Signals mcig = TILE_SIGNALS[mc->tile];
   Signals esig = e->signals;
 
-  if((mcig & esig) > 0)
+  if((mcig & esig) > 0){
     status = SOLV_TRUE;
+    TraceLog(LOG_INFO, "=== SOLVED %i====", mc->tile);
+  }
 
   return status;
 }
@@ -67,7 +113,7 @@ void OnLevelEvent(event_t *e, void* user){
   switch(e->type){
     case EVENT_LEVEL_TURN_END:
       l->turn++;
-
+      PuzzleCheckStatus(l->puzzle);
       break;
     case EVENT_LEVEL_SHIFT:
       LevelEvent(EVENT_ENT_ACTION, player, player->gouid);
@@ -75,15 +121,16 @@ void OnLevelEvent(event_t *e, void* user){
       break;
     case EVENT_LEVEL_CHECK:
       ent_t* p = e->data;
-      if(p->type != ENT_TILE)
+      if(!p || p->type != ENT_TILE)
         return;
 
       map_cell_t* mc = WorldGetTile(e->iuid);
-      if(mc->tile <= TILE_BLANK)
-        return;
-
-      SolveStatus status = LevelCheckSolution(mc, p);
-      PuzzleUpdateSolution(l->puzzle, mc, status);
+      if(mc->tile > TILE_BLANK && cell_compare(p->pos, mc->coords)){ 
+        SolveStatus status = LevelCheckSolution(mc, p);
+        PuzzleUpdateSolution(l->puzzle, mc, status);
+      }
+      
+      EntCheckStatus(p);
       break;
     case EVENT_LEVEL_SOLVED:
       TraceLog(LOG_INFO, "YOU DID IT");
@@ -96,16 +143,20 @@ void OnLevelEvent(event_t *e, void* user){
         if(MapForceOccupant(WorldGetMap(), slab, m->coords) < TILE_ISSUES){
           slab->old_pos = slab->pos;
           slab->pos = m->coords;
-          SetState(slab, STATE_PLACED, NULL);
+          if(SetState(slab, STATE_PLACED, NULL))
+            return;
         }
-        return;
       }
       if(MapSetTile(WorldGetMap(), TILE_BLANK, m->coords) < TILE_ISSUES){
         MapRemoveOccupant(WorldGetMap(), slab->pos);
-        SetState(slab, STATE_DIE,NULL);
-        
-      }
+        if(!SetState(slab, STATE_DIE,NULL))
+          SetState(slab, STATE_IDLE, NULL);
 
+      }
+      break;
+    case EVENT_ENT_DIE:
+      ent_t* ded = e->data;
+      FreeEnt(ded);
       break;
   }
 }
@@ -120,19 +171,49 @@ void OnPlayerAction(event_t* ev, void* user){
 stage_puzzle_t* StartPuzzle(int cap){
   stage_puzzle_t* p = GameCalloc("StartPuzzle", 1, sizeof(stage_puzzle_t));
   p->cap = cap;
-  p->entries = GameCalloc("StartPuzzle", cap, sizeof(solution_t));
+  p->entries = GameCalloc("StartPuzzle", cap, sizeof(puzzle_t));
+  p->pieces = GameCalloc("StartPuzzle", cap, sizeof(solution_t));
 
   return p;
 }
 
 bool PuzzleRegisterSolution(stage_puzzle_t* p, map_cell_t* mc, Signals solve){
 
-  solution_t* s = &p->entries[p->count++];
+  if(solve == SIG_NONE)
+    return false;
+
+  puzzle_t* s = &p->entries[p->count++];
 
   s->slot = mc;
   s->solution = solve;
 
+  if(solve > 0)
+    p->need++;
+
   return solve > 0;
+}
+
+bool PuzzleAddPiece(stage_puzzle_t* p, ent_t* e){
+  if(e->signals == SIG_NONE)
+    return false;
+
+  for(int i = 0; i < p->need; i++){
+    puzzle_t* pz = &p->entries[i];
+    if(pz->solution == SIG_NONE)
+      continue;
+
+    if((pz->solution & e->signals) == 0)
+      continue;
+
+    solution_t* s = &p->pieces[p->have++];
+
+    s->gouid = e->gouid;
+    s->has = e->signals;
+
+    return true;
+  }
+
+  return false;
 }
 
 level_t* InitLevel(Levels id){
@@ -176,7 +257,10 @@ void LevelReady(level_t* l){
       if(MapSetOccupant(l->map, e, pos) > TILE_ISSUES)
         continue;
 
+      PuzzleAddPiece(l->puzzle, e);
      LevelTargetSubscribe(EVENT_TILE_COLLISION, OnStaticCollide, e, e->gouid);
+     LevelTargetSubscribe(EVENT_ENT_DIE, OnLevelEvent, e, e->gouid);
+
 
     }
   }
@@ -188,6 +272,7 @@ void LevelReady(level_t* l){
   LevelSubscribe(EVENT_LEVEL_CHECK, OnLevelEvent, l);
   LevelSubscribe(EVENT_LEVEL_SOLVED, OnLevelEvent, l);
   LevelSubscribe(EVENT_TILE_INSERT, OnLevelEvent, l);
+
 }
 
 void LevelFixedUpdate(void){

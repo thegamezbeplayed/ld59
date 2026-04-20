@@ -1,6 +1,8 @@
 #include "raylib.h"
 #include "game_process.h"
 #include "game_ui.h"
+#include "screens.h"
+
 
 Camera2D camera = { 0 };
 //----------------------------------------------------------------------------------
@@ -9,9 +11,10 @@ Camera2D camera = { 0 };
 
 // Gameplay Screen Initialization logic
 void InitGameplayScreen(void){
-//  MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
+  MenuSetState(&ui.menus[MENU_HUD],MENU_READY);
   //camera.target = player.position;
-  InitCamera(2.0f,0.0f,Vector2Scale(VECTOR2_CENTER_SCREEN,0.5f),VECTOR2_CENTER_SCREEN);
+  InitCamera(2.0f,0.0f,Vector2Scale(ROOM_SIZE,0.5f),
+      Vector2Scale(ROOM_SIZE, 0.25f));
 
   InitAssetManager(MAX_LAYER_SPRITES);
   InitGameEvents();
@@ -34,6 +37,7 @@ void PostUpdate(void){
 // Gameplay Screen Update logic
 void UpdateGameplayScreen(void)
 {
+  UISync(FETCH_UPDATE);
   if(player)
     ScreenCameraSync( WorldPlayer()->pos );
 }
@@ -48,14 +52,9 @@ void DrawGameplayScreen(void)
 
   WorldRender();
 
-  ScreenRender();
   ScreenCameraToggle();
-  DrawTextEx(ui.font,GetLevelString(),Vector2XY(VECTOR2_CENTER_SCREEN.x, 32) ,28,1,BLUE);
-
   //MapGenRender();
-  //UISync(FETCH_UPDATE);
-  //UIRender();
-  DrawFPS(5,5);
+  UIRender();
 
   EndDrawing();
 

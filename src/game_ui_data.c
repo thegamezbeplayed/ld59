@@ -3,10 +3,14 @@
 
 ui_menu_d MENU_DATA[MENU_DONE] = {
   [MENU_MAIN] = {MENU_MAIN, "TITLE_MENU_DOM", ELEMENT_NONE, false,
-    {[MENU_ACTIVE] = MenuActivateChildren}
+    {
+      [MENU_READY]    = MenuActivateChildren,
+      [MENU_ACTIVE] = MenuTransitionScreen
+    },
+    { [MENU_ACTIVE] = KEY_ENTER }
   },
   [MENU_HUD] = {MENU_HUD, "HUD_MENU_DOM", ELEMENT_NONE, false,
-    {[MENU_LOAD] = MenuActivateChildren,
+    {[MENU_READY] = MenuActivateChildren,
     }
   }
 };
@@ -44,7 +48,7 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
       "TEXT_HEADER",
       "FLASHY_TEXT"
     },
-    .text = "SIGNALS CROSSED, A puzzle and memory game made in 72 hours, Made by August Karbowski, Music by Dan Jarosz, Press Enter to Play!",
+    .text = "SIGNALS CROSSED, A puzzle and memory game made in 72 hours, Made by August Karbowski, Music by Dan Jarosz, Press Enter to Jam!",
     .delimiter = ','
   },
   {"TITLE_HEADER", VECTOR2_ZERO, VECTOR2_ZERO, UI_TITLE, ELEMENT_NONE,
@@ -71,51 +75,71 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
       [UI_MARGIN_BOT] = 16, [UI_MARGIN_TOP] = 32
     }
   },
-  {"HUD_MENU_DOM", VECTOR2_ZERO, VECTOR2_ZERO, UI_CONTAINER, ELEMENT_NONE, 
-    LAYOUT_FREE, ALIGN_LEFT,
-    .spacing = {
-      [UI_MARGIN_TOP] = 12, [UI_MARGIN_LEFT] = 6,
-      [UI_PADDING_TOP] = 12, [UI_PADDING_LEFT] = 8
-    },
+  {"HUD_MENU_DOM", VECTOR2_ZERO, FIXED_SCREEN_SIZE, UI_CONTAINER,
+    ELEMENT_NONE,  LAYOUT_STACK, ALIGN_CENTER | ALIGN_TOP,
     .cb = {
       [ELEMENT_IDLE] = ElementActivateChildren,
       [ELEMENT_SHOW] = ElementShowChildren,
     },
+    .num_children = 1, .kids ={"TOP_HUD_PANE"}
   },
-  {"PLAYER_PANEL_HEADERS", VECTOR2_ZERO, VECTOR2_ZERO, UI_TAB_PANEL,
-    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_LEFT, NULL, ElementNiblings,
+  {"TOP_HUD_PANE", VECTOR2_ZERO, FIXED_SCREEN_SIZE, UI_PANEL,
+    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    .cb = {
+      [ELEMENT_IDLE] = ElementActivateChildren,
+      [ELEMENT_SHOW] = ElementShowChildren,
+    },
     {
-      [ELEMENT_LOAD] = ElementSetContext,
-      [ELEMENT_IDLE] = ElementLoadChildren,
-      [ELEMENT_SHOW] = ElementActivateChildren,
 
     },
-    .kids = {
-      "TAB_BUTTON"
+    .num_children = 4, .kids = {
+      "PARAM_LABEL",
+      "PARAM_LABEL",
+      "PARAM_LABEL",
+      "BUTTON_RESTART",
     },
-    .spacing = {[UI_MARGIN_LEFT] = 36, [UI_PADDING_RIGHT] = 4}
+    .params = {
+      {PARAM_LEVEL},
+      {PARAM_TURN},
+      {PARAM_SCORE},
+    },
+    .text = "LEVEL:,TURN:, SCORE:",
+    .delimiter = ','
   },
-  {"TAB_BUTTON", VECTOR2_ZERO, FIXED_BUTTON_SIZE, UI_BUTTON,
-    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_CENTER | ALIGN_MID, GetElementName, ElementPresetContext,
-    {
-      //[ELEMENT_LOAD] = ElementSetContext,
-      [ELEMENT_IDLE] = ElementSetContext,
-      [ELEMENT_ACTIVATE] = ElementTabToggle,
+  {"PARAM_LABEL", VECTOR2_ZERO, FIXED_BUTTON_SIZE, UI_LABEL,
+    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_CENTER | ALIGN_MID,
+    GetOwnerTextAt, ElementLevelContext,
+    .cb = {
+      [ELEMENT_LOAD] = ElementSetContext,
+      [ELEMENT_IDLE] = ElementActivateChildren,
+      [ELEMENT_SHOW] = ElementShowChildren
     },
-    .delimiter = ' '
+    {
+    },
+    .num_children = 2, .kids = {"NAME_TEXT","VALUE_TEXT"}
   },
-  {"HEADER_BAR", VECTOR2_ZERO, FIXED_HEADER_SIZE, UI_HEADER,
-    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_LEFT | ALIGN_TOP,
-    GetOwnerText, ElementGetOwnerContext, 
-    {
-      [ELEMENT_IDLE] = ElementSetContext,
-    },
+  {"NAME_TEXT", VECTOR2_ZERO, VECTOR2_ZERO, UI_TEXT,
+    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_LEFT,
+    GetOwnerText, ElementPresetContext,
+    .cb = {
+      [ELEMENT_LOAD] = ElementSetContext,
+    }
   },
-  {"HEADER_BAR_VAL", VECTOR2_ZERO, FIXED_HEADER_SIZE, UI_HEADER,
-    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_LEFT, GetOwnerValue, ElementGetOwnerContext,
-    {
-      [ELEMENT_IDLE] = ElementSetContext,
+  {"VALUE_TEXT", VECTOR2_ZERO, VECTOR2_ZERO, UI_TEXT,
+    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_LEFT,
+    GetContextParams, ElementGetOwnerContextParams,
+    .cb = {
+      [ELEMENT_LOAD] = ElementSetContext,
+
+    }
+  },
+  {"BUTTON_RESTART", VECTOR2_ZERO, FIXED_BUTTON_SIZE, UI_BUTTON,
+    ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    .cb = {
+      [ELEMENT_ACTIVATE] = ElementRestartLevel
+
     },
-  }, 
+    .text = "RESTART"
+  }
 };
 

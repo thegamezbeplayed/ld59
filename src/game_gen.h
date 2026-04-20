@@ -93,6 +93,8 @@ TileStatus MapTileAvailable(map_grid_t* m, Cell c);
 TileStatus MapRemoveOccupant(map_grid_t* m, Cell c);
 TileStatus MapSetTile(map_grid_t* m, Tiles, Cell c);
 
+TileStatus MapCheckMoveOptions(map_grid_t*, ent_t*);
+
 typedef bool (*TileBlock)(map_cell_t *c);
 typedef bool (*TileFlagHasFn)(TileFlags f);
 

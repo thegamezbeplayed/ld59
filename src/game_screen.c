@@ -17,13 +17,17 @@ void InitCamera(float zoom, float rot, Vector2 offset, Vector2 target){
 
   raycam->target = target;
 
-  float hei_disp = 0;
-  cam->bounds = Rect(offset.x, hei_disp, ROOM_WIDTH, ROOM_HEIGHT);
+  float hei_disp = 64;
+  float wid_disp = 156;
+  cam->bounds = Rect(wid_disp, hei_disp, ROOM_WIDTH, ROOM_HEIGHT);
   cam->size = vec_to_cell(RectSize(cam->bounds), CELL_WIDTH);
-  cam->view = Rect(0, 0, ROOM_WIDTH, -ROOM_HEIGHT);
+  cam->view = Rect(0, hei_disp, ROOM_WIDTH, -ROOM_HEIGHT);
   cam->render = LoadRenderTexture(cam->bounds.width, cam->bounds.height);
   cam->target = CELL_UNSET;
   cam->camera = raycam;
+  cam->play_area = RECT(0, 0,20,30);
+  cam->show_area = RECT(0,0,15,15);
+  cam->offset = CELL_NEW(5,5);
 }
 
 void ScreenCameraToggle(void){
@@ -43,20 +47,32 @@ void ScreenCameraToggle(void){
 }
 
 void ScreenCameraSync(Cell target){
-  Vector2 vpos =  CellToVector2(target,CELL_WIDTH);
 
-    
-  cam->camera->target = Vector2Lerp(cam->camera->target,vpos,0.1);
+  Rectangle new_show = {
+    target.x - cam->offset.x,
+    target.y + cam->offset.y,
+    cam->show_area.width,
+    cam->show_area.height
+  };
+
+  cam->show_area = clamp_rect_to_bounds(new_show, cam->play_area);
 
   cam->target = target;
 
+  Vector2 vpos =  CellToVector2(rect_center(cam->show_area),CELL_WIDTH);
+  cam->camera->target = Vector2Lerp(cam->camera->target,vpos,0.1);
   cam->pos.x = target.x - cam->size.x/2;
   cam->pos.y = target.y - cam->size.y/2;
 
 }
 
-void ScreenRender(void){
-
+void ScreenRender(Color c){
+  DrawRectangleLinesEx(cam->bounds, 1.5f, c);
+ 
+  Rectangle show = RectScale(cam->show_area, 60); 
+  Rectangle play = RectScale(cam->play_area, 60); 
+  DrawRectangleLinesEx(show, 1.5f, BLUE);
+  DrawRectangleLinesEx(play, 1.5f, GREEN);
 }
 
 

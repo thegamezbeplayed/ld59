@@ -108,7 +108,7 @@ bool ActionGlide(param_t user, param_t other){
     out = true;
 
   map_cell_t* mc = MapGetTile(WorldGetMap(), e->pos);
-  LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 9);
+  LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 4);
 
   return out;
 }
@@ -130,7 +130,7 @@ bool ActionRepel(param_t user, param_t other){
   bool out = EntGridStep(tar, dir) < TILE_ISSUES;
 
   map_cell_t* mc = MapGetTile(WorldGetMap(), tar->pos);
-  LevelScheduleEvent(EVENT_LEVEL_CHECK, tar, mc->gouid, TF_UPDATE, 9);
+  LevelScheduleEvent(EVENT_LEVEL_CHECK, tar, mc->gouid, TF_UPDATE, 12);
 
   return out;
 }

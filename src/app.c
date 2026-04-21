@@ -8,8 +8,8 @@
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
-float screenWidth = 1200.0f;
-float screenHeight = 900.0f; 
+float screenWidth = 600.0f;
+float screenHeight = 600.0f; 
 double currentTime = 0.0;           // Current time measure
 double updateDrawTime = 0.0;        // Update + Draw time
 double previousTime = 0.0;    // Previous time measure
@@ -35,9 +35,9 @@ int main(void)
 
   InitWindow(screenWidth,screenHeight, "raylib game template");
 
-//  InitAudioDevice();      // Initialize audio device
+  InitAudioDevice();      // Initialize audio device
 
-  //InitAudio();
+  InitAudio();
   InitResources();
   InitUI();
   

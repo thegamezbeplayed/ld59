@@ -26,7 +26,7 @@ void PreUpdate(void){
 }
 
 void FixedUpdate(void){
-//  AudioStep();
+  AudioStep();
   WorldFixedUpdate();
 }
 
@@ -64,7 +64,7 @@ void DrawGameplayScreen(void)
 // Gameplay Screen Unload logic
 void UnloadGameplayScreen(void)
 {
-  //MenuSetState(&ui.menus[MENU_HUD],MENU_CLOSED);
+  MenuSetState(&ui.menus[MENU_HUD],MENU_INACTIVE);
   //MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_INACTIVE);
 
   GameProcessEnd();

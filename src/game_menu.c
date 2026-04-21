@@ -41,7 +41,6 @@ ui_element_t* InitElementByName(const char* name, ui_menu_t* m, ui_element_t* o)
     e->gouid = GameObjectMakeUID(d.identifier, d.type, WorldGetTime());
 
     e->text = GameCalloc("InitElementByName",1, MAX_LINE_LEN);
-    e->debug_text = GameCalloc("InitElementByName",1, MAX_LINE_LEN);
 
     if(d.text[0] == '\0')
       e->text[0] = '\0';
@@ -121,9 +120,9 @@ void InitUI(void){
   GuiSetFont(font);
   ui.font = GuiGetFont();
 #if defined(PLATFORM_WEB)
-  GuiSetStyle(DEFAULT,TEXT_SIZE,27);
+  GuiSetStyle(DEFAULT,TEXT_SIZE,20);
 #elif defined(PLATFORM_ANDROID)
-  GuiSetStyle(DEFAULT,TEXT_SIZE,58);
+  GuiSetStyle(DEFAULT,TEXT_SIZE,32);
 #else
   GuiSetStyle(DEFAULT,TEXT_SIZE,14);
 #endif
@@ -135,7 +134,7 @@ void InitUI(void){
   GuiSetStyle(DEFAULT, BORDER_COLOR_NORMAL, ColorToInt(col));
   GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, ColorToInt(col));
 
-  ui.title_size = 48;
+  ui.title_size = 32;
   ui.title_col = BLUE,
   ui.text_size = GuiGetStyle(DEFAULT, TEXT_SIZE);
   ui.text_spacing = GuiGetStyle(DEFAULT, TEXT_SPACING);
@@ -155,6 +154,7 @@ void InitUI(void){
 
   InitMenuById(MENU_MAIN);
   InitMenuById(MENU_HUD);
+  InitMenuById(MENU_RECAP);
 }
 
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal){
@@ -388,7 +388,6 @@ void ElementRender(ui_element_t* e){
       break;
     case UI_PANEL:
   
-      strcpy(e->debug_text,e->name);
       GuiPanel(e->bounds, e->text);
       break;
     case UI_LABEL:
@@ -443,7 +442,6 @@ void ElementRender(ui_element_t* e){
     case UI_GROUP:
       ui_element_t* ac = e->children[e->active];
 
-      strcpy(e->debug_text,e->name);
       if(ac){
       GuiPanel(e->bounds, ac->text);
       
@@ -491,7 +489,11 @@ void UISync(FetchRate poll){
   ui.current_frame = WorldGetTime();
   ui.frame_lock = ui.last_press_frame + 15;
   for(int i = 0; i < MENU_DONE; i++){
+
     ui_menu_t *m = &ui.menus[i];
+    if(m->state < MENU_READY)
+      continue;
+
     for (int k = 0; k < MENU_END; k++){
       if(IsKeyPressed(m->key[k]))
         MenuSetState(m, k);
@@ -572,11 +574,10 @@ bool UIHideElement(ui_element_t* e){
         GuiDisableTooltip();
         active_tooltip = NULL;
     }
-
     return true;
-
-
   }
+
+  return false;
 }
 
 bool UICloseOwner(ui_element_t* e){
@@ -639,11 +640,9 @@ bool ElementTabToggle(ui_element_t* e){
     case ELEMENT_HIDDEN:
     case ELEMENT_IDLE:
     case ELEMENT_TOGGLE:
-      TraceLog(LOG_INFO,"==== TAB BUTTON SHOW %s %i====", p->name, p->index);
       return ElementSetState(p, ELEMENT_ACTIVATE);
       break;
     default:
-      TraceLog(LOG_INFO,"==== TAB BUTTON HIDE %s %i====", p->name, p->index);
       return ElementSetState(p, ELEMENT_HIDDEN);
       break;
   }
@@ -658,14 +657,12 @@ bool ElementToggle(ui_element_t* e){
   switch(e->prior){
     case ELEMENT_SHOW:
     case ELEMENT_ACTIVATE:
-      TraceLog(LOG_INFO,"===== ELEMENT TOGGLE ====\n hide %s",e->name);
       return ElementSetState(e, ELEMENT_HIDDEN);
       break;
     case ELEMENT_ACTIVATED:
       return ElementSetState(e, ELEMENT_IDLE);
       break;
     default:
-      TraceLog(LOG_INFO,"===== ELEMENT TOGGLE ====\n show %s",e->name);
       return ElementSetState(e, ELEMENT_ACTIVATE);
       break;
   }
@@ -710,7 +707,6 @@ bool ElementShowTooltip(ui_element_t* e){
     if(c->type != UI_TOOL_TIP)
       continue;
 
-    TraceLog(LOG_INFO, "TOOLTIP TOGGLE ON");
     if(ElementSetState(c, ELEMENT_SHOW))
       ElementSetState(c, ELEMENT_FOCUSED);
   }
@@ -733,19 +729,15 @@ bool ElementActivateChildren(ui_element_t* e){
     ElementSetState(e->children[i], ELEMENT_LOAD);
     ElementSetState(e->children[i], ELEMENT_IDLE);
   }
-  ElementSetState(e, ELEMENT_SHOW);
+  return ElementSetState(e, ELEMENT_SHOW);
 }
 
 bool ElementShowPrimary(ui_element_t* e){
   for (int i = 0; i < e->num_children; i++){
-    if(i == 0){
-      if(ElementSetState(e->children[i], ELEMENT_SHOW))
-        TraceLog(LOG_INFO,"===== ELEMENT SET PRIMARY ====\n SHOW %s",e->children[i]->name);
-    }
-    else{
-      if(ElementSetState(e->children[i], ELEMENT_HIDDEN))
-        TraceLog(LOG_INFO,"===== ELEMENT SET PRIMARY ====\n HIDE %s",e->children[i]->name);
-    }
+    if(i == 0)
+      return ElementSetState(e->children[i], ELEMENT_SHOW);
+    else
+      return ElementSetState(e->children[i], ELEMENT_HIDDEN);
   }
 }
 
@@ -769,7 +761,7 @@ void MenuOnStateChanged(ui_menu_t*m, MenuState old, MenuState s){
 
   switch(old){
     case MENU_INACTIVE:
-      ElementResize(m->element);
+      //ElementResize(m->element);
       break;
     default:
       break;
@@ -1176,8 +1168,6 @@ param_t ElementGetOwnerContext(void* p){
 
   if(!c->owner)
     return EMPTY_PARAM;
-
-  //TraceLog(LOG_INFO, "======= GET OWNER CONTEXT ====\n %s ctx set to %s ctx", c->name, c->owner->name);
 
   return c->owner->ctx;
 }

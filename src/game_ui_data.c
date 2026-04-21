@@ -2,20 +2,44 @@
 #include "game_process.h"
 
 ui_menu_d MENU_DATA[MENU_DONE] = {
-  [MENU_MAIN] = {MENU_MAIN, "TITLE_MENU_DOM", ELEMENT_NONE, false,
+  [MENU_MAIN] = {MENU_MAIN, "TITLE_MENU_DOM", MENU_INACTIVE, false,
     {
       [MENU_READY]    = MenuActivateChildren,
       [MENU_ACTIVE] = MenuTransitionScreen
     },
     { [MENU_ACTIVE] = KEY_ENTER }
   },
-  [MENU_HUD] = {MENU_HUD, "HUD_MENU_DOM", ELEMENT_NONE, false,
+  [MENU_HUD] = {MENU_HUD, "HUD_MENU_DOM", MENU_INACTIVE, false,
     {[MENU_READY] = MenuActivateChildren,
     }
-  }
+  },
+  [MENU_RECAP] = {MENU_RECAP, "EXIT_MENU_DOM", MENU_INACTIVE, false,
+    {[MENU_READY] = MenuActivateChildren,
+      [MENU_ACTIVE] = MenuTransitionScreen
+    },
+    { [MENU_ACTIVE] = KEY_ENTER }
+  },
+
 };
 
 ui_element_d ELEM_DATA[ELE_COUNT] = {
+  {"EXIT_MENU_DOM", VECTOR2_ZERO, FIXED_MENU_FULL, UI_CONTAINER,
+    ELEMENT_NONE, LAYOUT_STACK, ALIGN_MID | ALIGN_CENTER,
+    .cb = {
+      [ELEMENT_IDLE] = ElementActivateChildren,
+      [ELEMENT_SHOW] = ElementShowChildren,
+    },
+    {
+      [UI_MARGIN_TOP] = 8, [UI_MARGIN_LEFT] = 6,
+      [UI_PADDING_TOP] = 24, [UI_PADDING_LEFT] = 8 
+    },
+    1, {
+    //  "EXIT_BACKGROUND"
+      "EXIT_PANEL",
+    },
+    .text = "Signals Crossed"
+  },
+
   {"TITLE_MENU_DOM", VECTOR2_ZERO, FIXED_MENU_FULL, UI_CONTAINER,
     ELEMENT_NONE, LAYOUT_STACK, ALIGN_MID | ALIGN_CENTER,
     .cb = {
@@ -30,7 +54,27 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
     //  "TITLE_BACKGROUND"
       "TITLE_PANEL",
     },
-    .text = "Signals Crossed"
+    .text = "signals crossed"
+  },
+  {"EXIT_PANEL", VECTOR2_ZERO, VECTOR2_ZERO, UI_GROUP, ELEMENT_NONE,
+    LAYOUT_VERTICAL, ALIGN_MID | ALIGN_CENTER,
+    .cb = {
+      [ELEMENT_IDLE] = ElementActivateChildren,
+      [ELEMENT_SHOW] = ElementShowChildren,
+    },
+    {
+      [UI_MARGIN_TOP] = -36, [UI_PADDING_BOT] = 36, [UI_PADDING_TOP] = -24
+    },
+    .num_children = 5,{
+      "TITLE_HEADER",
+      "TEXT_HEADER",
+      "TEXT_HEADER",
+      "TEXT_HEADER",
+      "TEXT_HEADER",
+      "FLASHY_TEXT"
+    },
+    .text = "SIGNALS CROSSED,Thank you for playing,  Sorry it was so short getting sick and a massive emscripten bug really killed progress,If you want to follow my progress as I hope to release this as a full game head over to Thegamezbeplayed.com!,Press enter to keep Signalling!",
+    .delimiter = ','
   },
   {"TITLE_PANEL", VECTOR2_ZERO, VECTOR2_ZERO, UI_GROUP, ELEMENT_NONE,
     LAYOUT_VERTICAL, ALIGN_MID | ALIGN_CENTER,
@@ -48,7 +92,7 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
       "TEXT_HEADER",
       "FLASHY_TEXT"
     },
-    .text = "SIGNALS CROSSED, A puzzle and memory game made in 72 hours, Made by August Karbowski, Music by Dan Jarosz, Press Enter to Jam!",
+    .text = "SIGNALS CROSSED, A puzzle and memory game made in 72 hours, Made by August Karbowski, Music by Danego, Press Enter to Jam!",
     .delimiter = ','
   },
   {"TITLE_HEADER", VECTOR2_ZERO, VECTOR2_ZERO, UI_TITLE, ELEMENT_NONE,
@@ -90,12 +134,9 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
       [ELEMENT_SHOW] = ElementShowChildren,
     },
     {
-
+      [UI_PADDING_LEFT] = 320
     },
-    .num_children = 4, .kids = {
-      "PARAM_LABEL",
-      "PARAM_LABEL",
-      "PARAM_LABEL",
+    .num_children = 1, .kids = {
       "BUTTON_RESTART",
     },
     .params = {
@@ -135,6 +176,7 @@ ui_element_d ELEM_DATA[ELE_COUNT] = {
   },
   {"BUTTON_RESTART", VECTOR2_ZERO, FIXED_BUTTON_SIZE, UI_BUTTON,
     ELEMENT_NONE, LAYOUT_HORIZONTAL, ALIGN_MID | ALIGN_CENTER,
+    NULL, NULL,
     .cb = {
       [ELEMENT_ACTIVATE] = ElementRestartLevel
 

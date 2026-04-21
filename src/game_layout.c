@@ -4,8 +4,6 @@ float ElementGetWidthSum(ui_element_t *e){
   if(e->state < ELEMENT_IDLE)
     return 0;
 
-  if(e->num_children == MAX_SUB_ELE)
-    DO_NOTHING();
   float width = e->bounds.width;// + e->spacing[UI_MARGIN] + e->spacing[UI_MARGIN_LEFT];
 /*
   if(e->owner)

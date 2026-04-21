@@ -52,7 +52,7 @@
 #define FIXED_BOX_SIZE        (Vector2){36, 36}
 #define FIXED_TOOL_TIP        (Vector2){96, 20}
 #define FIXED_TITLE_CHAR      (Vector2){32, 48}
-#define FIXED_SCREEN_SIZE     (Vector2){ROOM_WIDTH, 64}
+#define FIXED_SCREEN_SIZE     (Vector2){450, 64}
 #define FIXED_DETAILS_BOX     (Vector2){264, 48}
 
 #define UI_PANEL_RIGHT (Vector2){1472, 0}
@@ -61,7 +61,6 @@
 
 #define UI_LOG_HOR (Vector2){640, 220}
 #define LABEL_LOG (Vector2){608, 18}
-
 #define LIST_LEFT_HAND_PAD 18
 #define LIST_RIGHT_HAND_PAD 8
 
@@ -266,7 +265,6 @@ struct ui_element_s{
   UIAlignment         align;
   int                 spacing[UI_POSITIONING];
   char*               text;
-  char*               debug_text;
   ElementSetValue     set_val;
   ElementValueSync    sync_val;
   element_value_t     *value;

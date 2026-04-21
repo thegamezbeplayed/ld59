@@ -57,7 +57,6 @@ void PuzzleCheckStatus(stage_puzzle_t* p){
   }
 
   if(needed == SIG_NONE){
-    TraceLog(LOG_WARNING, "solved?");
     return;
   }
 
@@ -78,7 +77,7 @@ void PuzzleCheckStatus(stage_puzzle_t* p){
 
   if(still_have < p->need || needed > SIG_NONE){
     p->completion = SOLV_STUCK;
-    WorldAnnounce(EVENT_LEVEL_STUCK, player->sprite->pos);
+    WorldAnnounce(EVENT_LEVEL_STUCK, CENTER_SCREEN);
     ScheduleEvent(EVENT_LEVEL_STUCK, p, p->need, TF_UPDATE, 36);
   }
 }
@@ -101,7 +100,6 @@ SolveStatus LevelCheckSolution(map_cell_t* mc, ent_t* e){
 
   if((mcig & esig) > 0){
     status = SOLV_TRUE;
-    TraceLog(LOG_INFO, "=== SOLVED %i====", mc->tile);
   }
 
   return status;
@@ -133,7 +131,6 @@ void OnLevelEvent(event_t *e, void* user){
       EntCheckStatus(p);
       break;
     case EVENT_LEVEL_SOLVED:
-      TraceLog(LOG_INFO, "YOU DID IT");
       LevelEvent(EVENT_LEVEL_END, l, l->id);
       break;
     case EVENT_TILE_INSERT:
@@ -165,7 +162,7 @@ void OnPlayerAction(event_t* ev, void* user){
   level_t* l = user;
   ent_t* e = ev->data;
 
-  LevelScheduleEvent(EVENT_LEVEL_TURN_END, l, l->id, TF_UPDATE, 15);
+  LevelScheduleEvent(EVENT_LEVEL_TURN_END, l, l->id, TF_UPDATE, 6);
 }
 
 stage_puzzle_t* StartPuzzle(int cap){

@@ -66,6 +66,10 @@ void WorldLevelReset(bool restart){
   int stage = restart? world.stage : world.stage+1;
   world.num_ent = 0;
 
+  if(stage >= LVL_ALL){
+    GameTransitionScreen();
+    return;
+  }
   HashClear(&world.ent_map);
   HashClear(&world.tile_map);
 
@@ -323,7 +327,8 @@ void InitGameProcess(){
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW] = DrawGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_FRAME] = UpdateGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_POST] = PostUpdate;
-  
+  game_process.album_id[SCREEN_GAMEPLAY] = AudioBuildMusicTracks("bingbong");
+
   game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelFixedUpdate; 
   game_process.children[PROCESS_LEVEL].process = PROCESS_LEVEL;
   game_process.next[SCREEN_ENDING] = SCREEN_TITLE;
@@ -363,6 +368,8 @@ bool GameTransitionScreen(){
   game_process.finish[current]();
   game_process.screen = prepare;
   game_process.state[prepare] = GAME_LOADING;
+  AudioPlayMusic(game_process.album_id[prepare]);
+
   return true;
 }
 

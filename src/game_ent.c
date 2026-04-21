@@ -88,7 +88,6 @@ bool CanChangeState(EntityState old, EntityState s){
   if(req.can)
   return req.can(old, req.required);
 
-  TraceLog(LOG_WARNING, "IMPOSSIBLE STATE %i from %i", s, old);
   return false;
 } 
 
@@ -105,7 +104,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(old){
     case STATE_SHIFTING:
       map_cell_t* mc = MapGetTile(WorldGetMap(), e->pos);
-      LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 12);
+      LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 3);
       
       break;
     default:
@@ -124,7 +123,6 @@ void EntCheckStatus(ent_t* e){
   if(MapCheckMoveOptions(WorldGetMap(), e) < TILE_ISSUES)
     return;
 
-  TraceLog(LOG_INFO, "STUCK %i", e->uid);
   SetState(e, STATE_STUCK, NULL);
 }
 

@@ -10,7 +10,7 @@
 #define MAX_PLAYERS 32
 
 #define MAX_BEHAVIOR_TREE 12
-#define MAX_NAME_LEN 64
+#define MAX_NAME_LEN 128
 
 #define ParamRead(o, T) ((T*)((o)->data))
 
@@ -226,7 +226,7 @@ static bool ParamCompare(param_t *a, param_t *b, ParamCompareFn fn){
 }
 
 //====EVENTS===>
-typedef void (*CooldownCallback)(payload_t* );
+typedef void (*CooldownCallback)(void* );
 
 
 typedef struct{
@@ -241,6 +241,7 @@ typedef struct{
   CooldownCallback  on_end;
   CooldownCallback  on_step;
 }cooldown_t;
+
 cooldown_t* InitCooldown(int dur, EventType type, CooldownCallback on_end_callback, void* params);
 void UnloadCooldown(cooldown_t* cd);
 

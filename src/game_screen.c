@@ -17,16 +17,16 @@ void InitCamera(float zoom, float rot, Vector2 offset, Vector2 target){
 
   raycam->target = target;
 
-  float hei_disp = 64;
-  float wid_disp = 156;
+  float hei_disp = 128;
+  float wid_disp = 176;
   cam->bounds = Rect(wid_disp, hei_disp, ROOM_WIDTH, ROOM_HEIGHT);
   cam->size = vec_to_cell(RectSize(cam->bounds), CELL_WIDTH);
-  cam->view = Rect(0, hei_disp, ROOM_WIDTH, -ROOM_HEIGHT);
+  cam->view = Rect(0, 0, ROOM_WIDTH, -ROOM_HEIGHT);
   cam->render = LoadRenderTexture(cam->bounds.width, cam->bounds.height);
   cam->target = CELL_UNSET;
   cam->camera = raycam;
-  cam->play_area = RECT(0, 0,20,30);
-  cam->show_area = RECT(0,0,15,15);
+  cam->play_area = RECT(0, 0,15,10);
+  cam->show_area = RECT(0,0,10,10);
   cam->offset = CELL_NEW(5,5);
 }
 
@@ -50,7 +50,7 @@ void ScreenCameraSync(Cell target){
 
   Rectangle new_show = {
     target.x - cam->offset.x,
-    target.y + cam->offset.y,
+    target.y + 4 * cam->offset.y,
     cam->show_area.width,
     cam->show_area.height
   };

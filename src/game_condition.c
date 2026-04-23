@@ -108,7 +108,7 @@ bool ActionGlide(param_t user, param_t other){
     out = true;
 
   map_cell_t* mc = MapGetTile(WorldGetMap(), e->pos);
-  LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 4);
+  LevelScheduleEvent(EVENT_LEVEL_CHECK, e, mc->gouid, TF_UPDATE, 12);
 
   return out;
 }

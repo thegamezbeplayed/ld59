@@ -252,8 +252,8 @@ TileStatus MapCheckMoveOptions(map_grid_t* m, ent_t* e){
   Cell corners[4];
   corners[0] = CELL_EMPTY;
   corners[1] = CELL_NEW(0, m->height -1) ;
-  corners[0] = CELL_NEW(m->width - 1, 0);
-  corners[0] = CELL_NEW(m->width-1, m->height -1);
+  corners[2] = CELL_NEW(m->width - 1, 0);
+  corners[3] = CELL_NEW(m->width-1, m->height -1);
   for (int i = 0; i < 4; i++){
     Cell corner = corners[i];
 

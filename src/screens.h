@@ -11,7 +11,7 @@
 #define DESIGN_HEIGHT 1200.0f
 //#endif
 
-#define CENTER_SCREEN (Vector2){0,100}
+#define CENTER_SCREEN (Vector2){-48,100}
 
 #define ROOM_WIDTH 600
 #define ROOM_HEIGHT 600

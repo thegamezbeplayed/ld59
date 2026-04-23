@@ -45,7 +45,7 @@ void InitInput(ent_t* player){
   player_input.owner = player;
 
   player_input.actions[ACT_MOVE] = (action_key_t){
-    ACT_MOVE,12,{KEY_H, KEY_J, KEY_K, KEY_L, KEY_D,KEY_A,KEY_W,KEY_S,KEY_LEFT, KEY_RIGHT,KEY_UP,KEY_DOWN},InputActionMove, 0};
+    ACT_MOVE,8,{KEY_H, KEY_J, KEY_K, KEY_L, KEY_D,KEY_A,KEY_W,KEY_S},InputActionMove, 0};
 
   player_input.active = true;
 }

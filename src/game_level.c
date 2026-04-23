@@ -162,7 +162,7 @@ void OnPlayerAction(event_t* ev, void* user){
   level_t* l = user;
   ent_t* e = ev->data;
 
-  LevelScheduleEvent(EVENT_LEVEL_TURN_END, l, l->id, TF_UPDATE, 6);
+  LevelScheduleEvent(EVENT_LEVEL_TURN_END, l, l->id, TF_UPDATE, 12);
 }
 
 stage_puzzle_t* StartPuzzle(int cap){

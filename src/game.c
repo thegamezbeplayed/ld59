@@ -53,6 +53,7 @@ void DrawGameplayScreen(void)
   WorldRender();
 
   ScreenCameraToggle();
+  ScreenRender(RED);
   //MapGenRender();
   UIRender();
 

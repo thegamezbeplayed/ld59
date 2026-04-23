@@ -95,11 +95,11 @@ typedef struct{
 static  announce_string_p ANNOUNCE_STRINGS[EVENT_NONE] = {
   [EVENT_LEVEL_STUCK] = { 5,
     {
-      {"hmm.. that wasn't right", 10},
+      {"hmm.. that wasn't right", 6},
       {"Lets try that again", 5},
-      {"I keep getting my signals crossed!", 6},
+      {"I keep getting my signals crossed!", 4},
       {"Next time.. for sure..", 4},
-      {"You must construct additional pylons", 1}
+      {"You must construct additional pylons", 2}
     }
   }
 };

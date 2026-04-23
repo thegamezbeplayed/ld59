@@ -150,7 +150,7 @@ void AddFloatingText(render_text_t *rt){
 }
 
 void WorldAnnounce(EventType type, Vector2 pos){
-   render_text_t* rt = InitRenderText(StringGetAnnouncement(type), pos, 14, BLUE, 48);
+   render_text_t* rt = InitRenderText(StringGetAnnouncement(type), pos, 11, BLUE, 48);
    AddFloatingText(rt);
 }
 
